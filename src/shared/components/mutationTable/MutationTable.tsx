@@ -645,7 +645,7 @@ export default class MutationTable<
                 filterString: string,
                 filterStringUpper: string
             ) => defaultFilter(d, 'mutationStatus', filterStringUpper),
-            visible: false,
+            visible: true,
         };
 
         this._columns[MutationTableColumnType.VALIDATION_STATUS] = {
