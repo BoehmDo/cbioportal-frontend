@@ -23,6 +23,7 @@ import ProgressIndicator, {
 } from '../../../shared/components/progressIndicator/ProgressIndicator';
 import autobind from 'autobind-decorator';
 import { WindowWidthBox } from '../../../shared/components/WindowWidthBox/WindowWidthBox';
+import parse from 'html-react-parser';
 
 export interface IClinicalDataTabTable {
     store: StudyViewPageStore;
@@ -55,7 +56,9 @@ export class ClinicalDataTab extends React.Component<
                         </a>
                     );
                 }
-                return <span data-test={data[key]}>{data[key]}</span>;
+                return (
+                    <span data-test={data[key]}>{parse(data[key] || '')}</span>
+                );
             },
             download: (data: { [id: string]: string }) => data[key] || '',
             sortBy: (data: { [id: string]: any }) => {

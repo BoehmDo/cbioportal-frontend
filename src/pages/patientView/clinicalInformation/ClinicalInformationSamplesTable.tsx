@@ -14,6 +14,7 @@ import styles from './style/sampleTable.module.scss';
 import { SHOW_ALL_PAGE_SIZE } from '../../../shared/components/paginationControls/PaginationControls';
 import { sortByClinicalAttributePriorityThenName } from '../../../shared/lib/SortUtils';
 import { isUrl } from 'cbioportal-frontend-commons';
+import parse from 'html-react-parser';
 
 interface IClinicalInformationSamplesTableProps {
     samples?: ClinicalDataBySampleId[];
@@ -46,7 +47,7 @@ export default class ClinicalInformationSamplesTable extends React.Component<
                         </a>
                     );
                 }
-                return <span>{data[col.id]}</span>;
+                return <span>{parse(data[col.id].toString())}</span>;
             },
             download: (data: ISampleRow) => `${data[col.id]}`,
             filter: (
