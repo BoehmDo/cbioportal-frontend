@@ -197,6 +197,10 @@ var config = {
                 from: './src/globalStyles/prefixed-bootstrap.min.css.map',
                 to: 'reactapp/prefixed-bootstrap.min.css.map',
             },
+            {
+                from: './attributes.json',
+                to: 'attributes.json',
+            },
         ]), // destination is relative to dist directory
         new TypedCssModulesPlugin({
             globPattern: 'src/**/*.module.scss',
