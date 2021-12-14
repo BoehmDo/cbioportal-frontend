@@ -55,6 +55,13 @@ export default class ClinicalInformationPatientTable extends React.Component<
                 ret = parseInt(data.value, 10).toFixed(0);
                 break;
             default:
+                const search = ['Ã¤', 'Ã¼', 'Ã¶', 'Ã„', 'Ã–', 'Ãœ', 'ÃŸ'];
+                const replace = ['ä', 'ü', 'ö', 'Ä', 'Ö', 'Ü', 'ß'];
+                let regex;
+                for (let i = 0; i < search.length; i++) {
+                    regex = new RegExp(search[i], 'g');
+                    data.value = data.value.replace(regex, replace[i]);
+                }
                 ret = parse(data.value);
                 break;
         }
