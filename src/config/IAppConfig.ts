@@ -5,9 +5,14 @@ export interface IAppConfig {
     frontendUrl?: string;
     serverConfig: IServerConfig;
     hide_login?: boolean;
-    fhirspark?: IFhirsparkConfig;
-    cancerdrugsUrl?: string;
-    cancerdrugsJsonUrl?: string;
+}
+
+export interface ILoadConfig {
+    apiRoot?: string;
+    baseUrl?: string;
+    configurationServiceUrl?: string;
+    frontendUrl?: string;
+    hide_login?: boolean;
 }
 
 export type CategorizedConfigItems = {
@@ -145,6 +150,9 @@ export interface IServerConfig {
     referenceGenomeVersion: string;
     skin_show_unauthorized_studies: boolean;
     skin_global_message_for_unauthorized_studies: string;
+    fhirspark?: IFhirsparkConfig;
+    cancerdrugsUrl?: string;
+    cancerdrugsJsonUrl?: string;
 }
 
 export interface IFhirsparkConfig {

@@ -3,12 +3,12 @@ import {
     EvidenceLevel,
     IReference,
 } from 'shared/model/TherapyRecommendation';
-import AppConfig from 'appConfig';
 import _ from 'lodash';
 import request from 'superagent';
 import * as React from 'react';
 import styles from './style/therapyRecommendation.module.scss';
 import { If, Then, Else } from 'react-if';
+import { getServerConfig } from 'config/config';
 
 export function truncate(
     s: string | undefined,
@@ -61,7 +61,7 @@ export function setAuthorInTherapyRecommendation(
 }
 
 export function getAuthor(): string {
-    return AppConfig.serverConfig.user_email_address;
+    return getServerConfig().user_email_address;
 }
 
 export function isTherapyRecommendationEmpty(

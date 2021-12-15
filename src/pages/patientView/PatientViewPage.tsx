@@ -34,7 +34,6 @@ import { validateParametersPatientView } from '../../shared/lib/validateParamete
 import LoadingIndicator from 'shared/components/loadingIndicator/LoadingIndicator';
 import ValidationAlert from 'shared/components/ValidationAlert';
 import PatientViewMutationsDataStore from './mutation/PatientViewMutationsDataStore';
-import AppConfig from 'appConfig';
 
 import './patient.scss';
 import IFrameLoader from '../../shared/components/iframeLoader/IFrameLoader';
@@ -44,7 +43,7 @@ import {
 } from '../../shared/api/urls';
 import { PageLayout } from '../../shared/components/PageLayout/PageLayout';
 import Helmet from 'react-helmet';
-import { ServerConfigHelpers } from '../../config/config';
+import { getServerConfig, ServerConfigHelpers } from '../../config/config';
 import autobind from 'autobind-decorator';
 import { showCustomTab } from '../../shared/lib/customTabs';
 import { StudyLink } from '../../shared/components/StudyLink/StudyLink';
@@ -229,11 +228,11 @@ export default class PatientViewPage extends React.Component<
     }
 
     public get showNewTimeline() {
-        return !AppConfig.serverConfig.patient_view_use_legacy_timeline;
+        return !getServerConfig().patient_view_use_legacy_timeline;
     }
 
     public get showOldTimeline() {
-        return AppConfig.serverConfig.patient_view_use_legacy_timeline;
+        return getServerConfig().patient_view_use_legacy_timeline;
     }
 
     @action.bound
@@ -1165,23 +1164,23 @@ export default class PatientViewPage extends React.Component<
                                                     }
                                                     userEmailAddress={ServerConfigHelpers.getUserEmailAddress()}
                                                     enableOncoKb={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_oncokb
                                                     }
                                                     enableFunctionalImpact={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_genomenexus
                                                     }
                                                     enableHotspot={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_hotspot
                                                     }
                                                     enableMyCancerGenome={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .mycancergenome_show
                                                     }
                                                     enableCivic={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_civic
                                                     }
                                                     columnVisibility={
@@ -1331,15 +1330,15 @@ export default class PatientViewPage extends React.Component<
                                                             .usingPublicOncoKbInstance
                                                     }
                                                     enableOncoKb={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_oncokb
                                                     }
                                                     enableCivic={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .show_civic
                                                     }
                                                     userEmailAddress={
-                                                        AppConfig.serverConfig
+                                                        getServerConfig()
                                                             .user_email_address
                                                     }
                                                     pubMedCache={
@@ -1673,7 +1672,7 @@ export default class PatientViewPage extends React.Component<
                                                 }
                                                 sampleManager={sampleManager}
                                                 oncoKbAvailable={
-                                                    AppConfig.serverConfig
+                                                    getServerConfig()
                                                         .show_oncokb &&
                                                     !this.patientViewPageStore
                                                         .cnaOncoKbData
@@ -1792,9 +1791,9 @@ export default class PatientViewPage extends React.Component<
 
                                 {this.resourceTabs.component}
 
-                                {AppConfig.serverConfig.custom_tabs &&
-                                    AppConfig.serverConfig.custom_tabs
-                                        .filter(
+                                {getServerConfig().custom_tabs &&
+                                    getServerConfig()
+                                        .custom_tabs.filter(
                                             (tab: any) =>
                                                 tab.location === 'PATIENT_PAGE'
                                         )

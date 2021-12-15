@@ -28,7 +28,6 @@ import {
     getTooltipEvidenceContent,
     getTooltipAuthorContent,
 } from './TherapyRecommendationTableUtils';
-import AppConfig from 'appConfig';
 import { Button } from 'react-bootstrap';
 import {
     Mutation,
@@ -41,6 +40,7 @@ import TherapyRecommendationFormOncoKb from './form/TherapyRecommendationFormOnc
 import PubMedCache from 'shared/cache/PubMedCache';
 import { VariantAnnotation, MyVariantInfo } from 'genome-nexus-ts-api-client';
 import { IMutationalSignature } from 'shared/model/MutationalSignature';
+import { getServerConfig } from 'config/config';
 
 export type ITherapyRecommendationProps = {
     patientId: string;
@@ -734,9 +734,7 @@ export default class MtbTherapyRecommendationTable extends React.Component<
                             this.onHideAddEditForm(therapyRecommendation);
                         }}
                         title="Edit therapy recommendation"
-                        userEmailAddress={
-                            AppConfig.serverConfig.user_email_address
-                        }
+                        userEmailAddress={getServerConfig().user_email_address}
                     />
                 )}
                 {this.showOncoKBForm && (
@@ -762,9 +760,7 @@ export default class MtbTherapyRecommendationTable extends React.Component<
                             this.onHideOncoKbForm(therapyRecommendations);
                         }}
                         title="Add therapy recommendation from OncoKB"
-                        userEmailAddress={
-                            AppConfig.serverConfig.user_email_address
-                        }
+                        userEmailAddress={getServerConfig().user_email_address}
                     />
                 )}
                 <TherapyRecommendationTableComponent
