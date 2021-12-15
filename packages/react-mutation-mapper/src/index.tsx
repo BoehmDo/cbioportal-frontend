@@ -3,14 +3,7 @@ export {
     download as civicDownload,
     sortValue as civicSortValue,
 } from './component/civic/Civic';
-export {
-    default as ClinVarSummary,
-    ClinVarRcvInterpretation,
-    getRcvCountMap,
-    getRcvData,
-    RcvCountMap,
-    RcvData,
-} from './component/clinvar/ClinVarSummary';
+export { default as ClinvarSummary } from './component/clinvar/ClinvarSummary';
 export {
     AnnotationProps,
     default as Annotation,
@@ -21,10 +14,11 @@ export {
     sortValue as annotationSortValue,
 } from './component/column/Annotation';
 export {
-    default as ClinVar,
-    download as clinVarDownload,
-    sortValue as clinVarSortValue,
-} from './component/column/ClinVar';
+    default as ClinvarInterpretation,
+    download as clinvarDownload,
+    sortValue as clinvarSortValue,
+} from './component/column/ClinvarInterpretation';
+export * from './component/clinvar/ClinvarHelper';
 export { default as ColumnHeader } from './component/column/ColumnHeader';
 export {
     default as Dbsnp,
@@ -101,6 +95,7 @@ export {
     download as oncoKbAnnotationDownload,
     IOncoKbProps,
 } from './component/oncokb/OncoKB';
+export { default as OncoKbHelper } from './component/oncokb/OncoKbHelper';
 export { default as OncoKBSuggestAnnotationLinkout } from './component/oncokb/OncoKBSuggestAnnotationLinkout';
 export { default as OncoKbTreatmentTable } from './component/oncokb/OncoKbTreatmentTable';
 export { default as OncoKbFeedback } from './component/oncokb/OncoKbFeedback';
@@ -145,6 +140,14 @@ export { MutationFilter } from './filter/MutationFilter';
 export { OncoKbFilter } from './filter/OncoKbFilter';
 export { PositionFilter } from './filter/PositionFilter';
 export { ProteinImpactTypeFilter } from './filter/ProteinImpactTypeFilter';
+export {
+    NumericalFilter,
+    NumericalFilterValue,
+} from './filter/NumericalFilter';
+export {
+    CategoricalFilter,
+    CategoricalFilterValue,
+} from './filter/CategoricalFilter';
 
 export { DataFilter, DataFilterType } from './model/DataFilter';
 export { DataStore } from './model/DataStore';
@@ -158,7 +161,6 @@ export { SequenceSpec } from './model/SequenceSpec';
 
 export * from './util/DataFetcherUtils';
 export * from './util/FilterUtils';
-export * from 'cbioportal-utils';
 export {
     MUTATION_TYPE_PRIORITY,
     mutationTypeSort,
@@ -168,7 +170,11 @@ export {
 export {
     defaultOncoKbFilter,
     groupOncoKbIndicatorDataByMutations,
+    oncogenicityIconClassNames,
+    normalizeLevel,
+    levelIconClassNames,
 } from './util/OncoKbUtils';
+export * from './util/SelectorUtils';
 export * from './util/TrackUtils';
 
 export { default as DefaultMutationMapperDataFetcher } from './store/DefaultMutationMapperDataFetcher';

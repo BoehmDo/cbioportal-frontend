@@ -8,6 +8,7 @@ import CosmicMutationTable from 'shared/components/cosmic/CosmicMutationTable';
 import styles from './cosmic.module.scss';
 import { ICosmicData } from 'shared/model/Cosmic';
 import generalStyles from './styles.module.scss';
+import memoize from 'memoize-weak-decorator';
 
 export function placeArrow(tooltipEl: any) {
     const arrowEl = tooltipEl.querySelector('.rc-tooltip-arrow');
@@ -48,6 +49,7 @@ export default class CosmicColumnFormatter {
         return value;
     }
 
+    @memoize
     public static extractPosition(proteinChange: string) {
         const pos = getProteinPositionFromProteinChange(proteinChange);
         if (pos) {
@@ -57,6 +59,7 @@ export default class CosmicColumnFormatter {
         }
     }
 
+    @memoize
     public static getSortValue(
         data: Mutation[],
         cosmicData?: ICosmicData

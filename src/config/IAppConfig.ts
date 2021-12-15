@@ -46,6 +46,7 @@ export interface IServerConfig {
     g2s_url: string | null;
     google_analytics_profile_id: string | null;
     isoformOverrideSource: string;
+    ptmSources: string[] | undefined;
     oncoprint_hide_vus_default: boolean;
     mycancergenome_show: boolean | undefined;
     oncokb_public_api_url: string | null;
@@ -80,6 +81,7 @@ export interface IServerConfig {
     skin_examples_right_column_html: string | null;
     skin_documentation_faq: string | null;
     skin_footer: string | null;
+    skin_footer_show_dev: boolean;
     skin_login_contact_html: string | null;
     skin_login_saml_registration_html: string | null;
     skin_citation_rule_text: string | null;
@@ -91,6 +93,7 @@ export interface IServerConfig {
     skin_right_nav_show_examples: boolean;
     skin_right_nav_show_testimonials: boolean;
     skin_right_nav_show_whats_new: boolean;
+    skin_right_nav_show_twitter: boolean;
     skin_right_nav_whats_new_blurb: string | null;
     skin_show_about_tab: boolean;
     skin_show_data_tab: boolean;
@@ -102,6 +105,8 @@ export interface IServerConfig {
     skin_show_web_api_tab: boolean;
     skin_show_tweet_button: boolean;
     skin_show_tissue_image_tab: boolean;
+    skin_hide_logout_button: boolean;
+    skin_show_settings_menu: boolean;
     skin_title: string;
     skin_authorization_message: string | null;
     skin_patientview_filter_genes_profiled_all_samples: boolean;
@@ -129,12 +134,17 @@ export interface IServerConfig {
     query_product_limit: number;
     dat_method: string;
     skin_show_gsva: boolean;
+    skin_geneset_hierarchy_default_gsva_score: number;
+    skin_geneset_hierarchy_default_p_value: number;
     oncoKbTokenDefined: boolean;
     generic_assay_display_text: string; // this has a default
     saml_logout_local: boolean;
     patient_view_use_legacy_timeline: boolean;
     installation_map_url: string;
     enable_request_body_gzip_compression: boolean;
+    referenceGenomeVersion: string;
+    skin_show_unauthorized_studies: boolean;
+    skin_global_message_for_unauthorized_studies: string;
 }
 
 export interface IFhirsparkConfig {

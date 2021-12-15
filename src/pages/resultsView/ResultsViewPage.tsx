@@ -346,6 +346,7 @@ export default class ResultsViewPage extends React.Component<
                             key={6}
                             id={ResultsViewTab.CN_SEGMENTS}
                             linkText="CN Segments"
+                            className="cnSegmentsMSKTab"
                         >
                             <CNSegments store={store} />
                         </MSKTab>
@@ -646,7 +647,8 @@ export default class ResultsViewPage extends React.Component<
                         )}
 
                     {(this.resultsViewPageStore.studies.isPending ||
-                        !tabsReady) && (
+                        (!tabsReady &&
+                            !this.resultsViewPageStore.queryFormVisible)) && (
                         <LoadingIndicator
                             isLoading={true}
                             center={true}
@@ -711,6 +713,9 @@ export default class ResultsViewPage extends React.Component<
                                 </div>
                                 {tabsReady && (
                                     <MSKTabs
+                                        // When important parts of the query change (included in the hash), we
+                                        //  want to remount the tabs so that we rerun any initialization code
+                                        //  that depends on the query.
                                         key={this.urlWrapper.hash}
                                         activeTabId={
                                             this.resultsViewPageStore.tabId

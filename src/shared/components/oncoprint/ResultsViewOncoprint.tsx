@@ -234,11 +234,9 @@ export default class ResultsViewOncoprint extends React.Component<
     } = {};
 
     @computed get selectedClinicalAttributeIds() {
-        const list = this.urlWrapper.query.clinicallist
-            ? this.urlWrapper.query.clinicallist.split(',')
-            : [];
+        const list = this.urlWrapper.oncoprintSelectedClinicalTracks.slice();
 
-        // when there is no user selection in ULR, we want to
+        // when there is no user selection in URL, we want to
         // have some default tracks based on certain conditions
         if (this.urlWrapper.query.clinicallist === undefined) {
             if (
@@ -467,10 +465,10 @@ export default class ResultsViewOncoprint extends React.Component<
                 return self.props.store.driverAnnotationSettings.cosmicCount;
             },
             get hidePutativePassengers() {
-                return self.props.store.driverAnnotationSettings.excludeVUS;
+                return !self.props.store.driverAnnotationSettings.includeVUS;
             },
             get hideGermlineMutations() {
-                return self.props.store.excludeGermlineMutations;
+                return !self.props.store.includeGermlineMutations;
             },
             get annotateCBioPortalInputValue() {
                 return (
@@ -649,7 +647,7 @@ export default class ResultsViewOncoprint extends React.Component<
                             );
                         }
                     );
-                    this.props.store.driverAnnotationSettings.excludeVUS = false;
+                    this.props.store.driverAnnotationSettings.includeVUS = true;
                 } else {
                     if (
                         !this.controlsState.annotateDriversOncoKbDisabled &&
@@ -718,8 +716,8 @@ export default class ResultsViewOncoprint extends React.Component<
                     );
                 }
             ),
-            onSelectHidePutativePassengers: (s: boolean) => {
-                this.props.store.driverAnnotationSettings.excludeVUS = s;
+            onSelectHideVUS: (s: boolean) => {
+                this.props.store.driverAnnotationSettings.includeVUS = !s;
             },
             onSelectHideGermlineMutations: (s: boolean) => {
                 this.props.store.setExcludeGermlineMutations(s);
@@ -1156,9 +1154,11 @@ export default class ResultsViewOncoprint extends React.Component<
     @action private onChangeSelectedClinicalTracks(
         clinicalAttributeIds: (string | SpecialAttribute)[]
     ) {
-        this.urlWrapper.updateURL({
-            clinicallist: clinicalAttributeIds.join(','),
-        });
+        this.urlWrapper.updateURL(
+            this.urlWrapper.getOncoprintClinicalTrackParams(
+                clinicalAttributeIds
+            )
+        );
     }
 
     private onDeleteClinicalTrack(clinicalTrackKey: string) {
@@ -1171,9 +1171,9 @@ export default class ResultsViewOncoprint extends React.Component<
                     item !==
                     this.clinicalTrackKeyToAttributeId(clinicalTrackKey)
             );
-            this.urlWrapper.updateURL({
-                clinicallist: withoutDeleted.join(','),
-            });
+            this.urlWrapper.updateURL(
+                this.urlWrapper.getOncoprintClinicalTrackParams(withoutDeleted)
+            );
         }
     }
 
@@ -1701,6 +1701,7 @@ export default class ResultsViewOncoprint extends React.Component<
                                 width={this.width}
                                 caseLinkOutInTooltips={true}
                                 suppressRendering={this.isLoading}
+                                keepSorted={!this.isLoading}
                                 onSuppressRendering={this.onSuppressRendering}
                                 onReleaseRendering={this.onReleaseRendering}
                                 hiddenIds={

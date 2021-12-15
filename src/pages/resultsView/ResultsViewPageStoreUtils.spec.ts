@@ -14,6 +14,7 @@ import {
     computeCustomDriverAnnotationReport,
     fetchQueriedStudies,
     filterSubQueryData,
+    getGeneAndProfileChunksForRequest,
     getMultipleGeneResultKey,
     getSampleAlteredMap,
     getSingleGeneResultKey,
@@ -26,6 +27,7 @@ import {
 } from './ResultsViewPageStoreUtils';
 import {
     AnnotatedExtendedAlteration,
+    AnnotatedMutation,
     CustomDriverNumericGeneMolecularData,
     IQueriedMergedTrackCaseData,
 } from './ResultsViewPageStore';
@@ -83,7 +85,10 @@ describe('ResultsViewPageStoreUtils', () => {
         it('returns the right report for no annotations, one element', () => {
             assert.deepEqual(
                 computeCustomDriverAnnotationReport([neitherMutation]),
-                { hasBinary: false, tiers: [] }
+                {
+                    hasBinary: false,
+                    tiers: [],
+                }
             );
         });
         it('returns the right report for no annotations, three elements', () => {
@@ -93,7 +98,10 @@ describe('ResultsViewPageStoreUtils', () => {
                     neitherMutation,
                     neitherMutation,
                 ]),
-                { hasBinary: false, tiers: [] }
+                {
+                    hasBinary: false,
+                    tiers: [],
+                }
             );
         });
         it('returns the right report for just binary annotations, one element', () => {
@@ -117,7 +125,10 @@ describe('ResultsViewPageStoreUtils', () => {
                 computeCustomDriverAnnotationReport([
                     driverTiersFilterMutation,
                 ]),
-                { hasBinary: false, tiers: ['T'] }
+                {
+                    hasBinary: false,
+                    tiers: ['T'],
+                }
             );
         });
         it('returns the right report for just tiers annotations, three elements', () => {
@@ -127,13 +138,19 @@ describe('ResultsViewPageStoreUtils', () => {
                     driverTiersFilterMutation,
                     neitherMutation,
                 ]),
-                { hasBinary: false, tiers: ['T'] }
+                {
+                    hasBinary: false,
+                    tiers: ['T'],
+                }
             );
         });
         it('returns the right report for binary and tier annotation in one element', () => {
             assert.deepEqual(
                 computeCustomDriverAnnotationReport([bothMutation]),
-                { hasBinary: true, tiers: ['SDPOIFJP'] }
+                {
+                    hasBinary: true,
+                    tiers: ['SDPOIFJP'],
+                }
             );
         });
         it('returns the right report for binary and tier annotation, both present in three elements', () => {
@@ -143,7 +160,10 @@ describe('ResultsViewPageStoreUtils', () => {
                     neitherMutation,
                     bothMutation,
                 ]),
-                { hasBinary: true, tiers: ['SDPOIFJP'] }
+                {
+                    hasBinary: true,
+                    tiers: ['SDPOIFJP'],
+                }
             );
         });
         it('returns the right report for binary and tier annotation in different elements', () => {
@@ -152,7 +172,10 @@ describe('ResultsViewPageStoreUtils', () => {
                     driverTiersFilterMutation,
                     driverFilterMutation,
                 ]),
-                { hasBinary: true, tiers: ['T'] }
+                {
+                    hasBinary: true,
+                    tiers: ['T'],
+                }
             );
         });
         it('returns the right report for binary and tier annotation in different elements, including an element with no annotation', () => {
@@ -162,7 +185,10 @@ describe('ResultsViewPageStoreUtils', () => {
                     driverFilterMutation,
                     neitherMutation,
                 ]),
-                { hasBinary: true, tiers: ['T'] }
+                {
+                    hasBinary: true,
+                    tiers: ['T'],
+                }
             );
         });
     });
@@ -708,6 +734,363 @@ describe('ResultsViewPageStoreUtils', () => {
                     oncoKbOncogenic: '',
                     entrezGeneId: 9,
                 } as any
+            );
+        });
+    });
+
+    describe('filterAndAnnotateMutations', () => {
+        it('returns empty list for empty input', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations([], () => ({} as any), {}),
+                {
+                    data: [],
+                    germline: [],
+                    vus: [],
+                    vusAndGermline: [],
+                }
+            );
+        });
+        it('annotates a single mutation', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [{ mutationType: 'missense', entrezGeneId: 1 } as Mutation],
+                    () => ({
+                        oncoKb: '',
+                        hotspots: true,
+                        cbioportalCount: false,
+                        cosmicCount: true,
+                        customDriverBinary: false,
+                    }),
+                    { 1: { hugoGeneSymbol: 'mygene' } as Gene }
+                ),
+                {
+                    data: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'mygene',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: true,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        } as AnnotatedMutation,
+                    ],
+                    germline: [],
+                    vus: [],
+                    vusAndGermline: [],
+                }
+            );
+        });
+        it('annotates a few mutations', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [
+                        {
+                            mutationType: 'missense',
+                            entrezGeneId: 1,
+                        } as Mutation,
+                        {
+                            mutationType: 'in_frame_del',
+                            entrezGeneId: 1,
+                        } as Mutation,
+                        { mutationType: 'asdf', entrezGeneId: 134 } as Mutation,
+                    ],
+                    () => ({
+                        oncoKb: '',
+                        hotspots: true,
+                        cbioportalCount: false,
+                        cosmicCount: true,
+                        customDriverBinary: false,
+                    }),
+                    {
+                        1: { hugoGeneSymbol: 'gene1hello' } as Gene,
+                        134: { hugoGeneSymbol: 'gene3hello' } as Gene,
+                    }
+                ),
+                {
+                    data: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: true,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        },
+                        {
+                            mutationType: 'in_frame_del',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'in_frame_del'
+                            ),
+                            isHotspot: true,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        },
+                        {
+                            mutationType: 'asdf',
+                            hugoGeneSymbol: 'gene3hello',
+                            entrezGeneId: 134,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'asdf'
+                            ),
+                            isHotspot: true,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        },
+                    ] as AnnotatedMutation[],
+                    vus: [],
+                    germline: [],
+                    vusAndGermline: [],
+                }
+            );
+        });
+        it('excludes a single non-annotated mutation', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [{ mutationType: 'missense', entrezGeneId: 1 } as Mutation],
+                    () => ({
+                        oncoKb: '',
+                        hotspots: false,
+                        cbioportalCount: false,
+                        cosmicCount: false,
+                        customDriverBinary: false,
+                    }),
+                    {
+                        1: { hugoGeneSymbol: 'gene1hello' } as Gene,
+                        134: { hugoGeneSymbol: 'gene3hello' } as Gene,
+                    }
+                ),
+                {
+                    data: [],
+                    germline: [],
+                    vus: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                    ] as AnnotatedMutation[],
+                    vusAndGermline: [],
+                }
+            );
+        });
+        it('excludes non-annotated mutations from a list of a few', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [
+                        {
+                            mutationType: 'missense',
+                            entrezGeneId: 1,
+                        } as Mutation,
+                        {
+                            mutationType: 'in_frame_del',
+                            entrezGeneId: 1,
+                        } as Mutation,
+                        { mutationType: 'asdf', entrezGeneId: 134 } as Mutation,
+                    ],
+                    m =>
+                        m.mutationType === 'in_frame_del'
+                            ? {
+                                  oncoKb: '',
+                                  hotspots: false,
+                                  cbioportalCount: false,
+                                  cosmicCount: false,
+                                  customDriverBinary: true,
+                              }
+                            : {
+                                  oncoKb: '',
+                                  hotspots: false,
+                                  cbioportalCount: false,
+                                  cosmicCount: false,
+                                  customDriverBinary: false,
+                              },
+                    {
+                        1: { hugoGeneSymbol: 'gene1hello' } as Gene,
+                        134: { hugoGeneSymbol: 'gene3hello' } as Gene,
+                    }
+                ),
+                {
+                    data: [
+                        {
+                            mutationType: 'in_frame_del',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'in_frame_del'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        },
+                    ] as AnnotatedMutation[],
+                    vus: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                        {
+                            mutationType: 'asdf',
+                            hugoGeneSymbol: 'gene3hello',
+                            entrezGeneId: 134,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'asdf'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                    ] as AnnotatedMutation[],
+                    germline: [],
+                    vusAndGermline: [],
+                }
+            );
+        });
+        it('excludes a single germline mutation', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [
+                        {
+                            mutationType: 'missense',
+                            entrezGeneId: 1,
+                            mutationStatus: 'germline',
+                        } as Mutation,
+                    ],
+                    () => ({
+                        oncoKb: '',
+                        hotspots: false,
+                        cbioportalCount: false,
+                        cosmicCount: false,
+                        customDriverBinary: false,
+                    }),
+                    {
+                        1: { hugoGeneSymbol: 'gene1hello' } as Gene,
+                        134: { hugoGeneSymbol: 'gene3hello' } as Gene,
+                    }
+                ),
+                {
+                    data: [],
+                    vusAndGermline: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'gene1hello',
+                            mutationStatus: 'germline',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                    ] as AnnotatedMutation[],
+                    vus: [],
+                    germline: [],
+                }
+            );
+        });
+        it('excludes germline mutations from a list of a few', () => {
+            assert.deepEqual(
+                filterAndAnnotateMutations(
+                    [
+                        {
+                            mutationType: 'missense',
+                            entrezGeneId: 1,
+                            mutationStatus: 'germline',
+                        } as Mutation,
+                        {
+                            mutationType: 'in_frame_del',
+                            entrezGeneId: 1,
+                        } as Mutation,
+                        {
+                            mutationType: 'asdf',
+                            entrezGeneId: 134,
+                            mutationStatus: 'germline',
+                        } as Mutation,
+                    ],
+                    m =>
+                        m.mutationType === 'in_frame_del'
+                            ? {
+                                  oncoKb: '',
+                                  hotspots: false,
+                                  cbioportalCount: false,
+                                  cosmicCount: false,
+                                  customDriverBinary: true,
+                              }
+                            : {
+                                  oncoKb: '',
+                                  hotspots: false,
+                                  cbioportalCount: false,
+                                  cosmicCount: false,
+                                  customDriverBinary: false,
+                              },
+                    {
+                        1: { hugoGeneSymbol: 'gene1hello' } as Gene,
+                        134: { hugoGeneSymbol: 'gene3hello' } as Gene,
+                    }
+                ),
+                {
+                    data: [
+                        {
+                            mutationType: 'in_frame_del',
+                            hugoGeneSymbol: 'gene1hello',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'in_frame_del'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: true,
+                        },
+                    ] as AnnotatedMutation[],
+                    germline: [],
+                    vus: [],
+                    vusAndGermline: [
+                        {
+                            mutationType: 'missense',
+                            hugoGeneSymbol: 'gene1hello',
+                            mutationStatus: 'germline',
+                            entrezGeneId: 1,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'missense'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                        {
+                            mutationType: 'asdf',
+                            hugoGeneSymbol: 'gene3hello',
+                            mutationStatus: 'germline',
+                            entrezGeneId: 134,
+                            simplifiedMutationType: getSimplifiedMutationType(
+                                'asdf'
+                            ),
+                            isHotspot: false,
+                            oncoKbOncogenic: '',
+                            putativeDriver: false,
+                        },
+                    ] as AnnotatedMutation[],
+                }
             );
         });
     });
@@ -2189,6 +2572,61 @@ describe('parseGenericAssayGroups', () => {
             result,
             expectedResult,
             'return result for multiple correct formatted generic assay groups'
+        );
+    });
+});
+
+describe('getGeneAndProfileChunksForRequest', () => {
+    let genes: Gene[];
+    let profileIds: string[];
+
+    before(() => {
+        genes = [
+            {
+                hugoGeneSymbol: 'EGFR',
+            },
+            {
+                hugoGeneSymbol: 'PTEN',
+            },
+            {
+                hugoGeneSymbol: 'BRCA1',
+            },
+            {
+                hugoGeneSymbol: 'TP53',
+            },
+        ] as Gene[];
+
+        profileIds = ['profile1', 'profile2', 'profile3', 'profile4'];
+    });
+    it('gives back trivial chunks when the limit is not reached', () => {
+        assert.deepEqual(
+            getGeneAndProfileChunksForRequest(10000, 10, genes, profileIds),
+            { geneChunks: [genes], profileChunks: [profileIds] }
+        );
+    });
+
+    it('gives back gene chunks when the limit is reached', () => {
+        assert.deepEqual(
+            getGeneAndProfileChunksForRequest(10000, 1000, genes, profileIds),
+            {
+                geneChunks: [
+                    [genes[0], genes[1]],
+                    [genes[2], genes[3]],
+                ],
+                profileChunks: [profileIds],
+            }
+        );
+    });
+    it('gives back profile chunks when gene chunking isnt enough', () => {
+        assert.deepEqual(
+            getGeneAndProfileChunksForRequest(10000, 3000, genes, profileIds),
+            {
+                geneChunks: [[genes[0]], [genes[1]], [genes[2]], [genes[3]]],
+                profileChunks: [
+                    [profileIds[0], profileIds[1], profileIds[2]],
+                    [profileIds[3]],
+                ],
+            }
         );
     });
 });

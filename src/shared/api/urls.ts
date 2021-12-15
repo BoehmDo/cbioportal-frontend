@@ -59,9 +59,11 @@ export function buildCBioPortalPageUrl(
         typeof pathnameOrParams === 'string'
             ? { pathname: pathnameOrParams, query, hash }
             : pathnameOrParams;
+
+    // AppConfig.frontendUrl format is '//url/', hence the specified slice to get just 'url'
     return URL.format({
         protocol: window.location.protocol,
-        host: AppConfig.baseUrl,
+        host: AppConfig.baseUrl || AppConfig.frontendUrl?.slice(2, -1),
         ...params,
     });
 }
@@ -312,7 +314,12 @@ export function getDigitalSlideArchiveMetaUrl(patientId: string) {
     return AppConfig.serverConfig.digital_slide_archive_meta_url + patientId;
 }
 export function getDigitalSlideArchiveIFrameUrl(patientId: string) {
-    return AppConfig.serverConfig.digital_slide_archive_iframe_url + patientId;
+    //format:
+    //https://cancer.digitalslidearchive.org/#!/CDSA/caseName/TCGA-02-0006
+    return (
+        AppConfig.serverConfig.digital_slide_archive_iframe_url +
+        `#!/CDSA/${patientId}`
+    );
 }
 
 export function getDarwinUrl(sampleIds: string[], caseId: string) {

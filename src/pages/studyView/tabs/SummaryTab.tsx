@@ -32,6 +32,7 @@ import { DataType } from 'cbioportal-frontend-commons';
 import { GenericAssayDataBin } from 'cbioportal-ts-api-client/dist/generated/CBioPortalAPIInternal';
 import DelayedRender from 'shared/components/DelayedRender';
 import { getRemoteDataGroupStatus } from 'cbioportal-utils';
+import AppConfig from 'appConfig';
 
 export interface IStudySummaryTabProps {
     store: StudyViewPageStore;
@@ -232,9 +233,12 @@ export class StudySummaryTab extends React.Component<
                 if (
                     this.store.isUserDefinedCustomDataChart(chartMeta.uniqueKey)
                 ) {
-                    props.filters = this.store.getPreDefinedCustomChartFilters(
-                        props.chartMeta!.uniqueKey
-                    );
+                    props.filters = this.store
+                        .getCustomDataFiltersByUniqueKey(chartMeta.uniqueKey)
+                        .map(
+                            clinicalDataFilterValue =>
+                                clinicalDataFilterValue.value
+                        );
                     props.onValueSelection = this.handlers.setCustomChartFilters;
                     props.onResetSelection = this.handlers.setCustomChartFilters;
                     props.promise = this.store.getCustomDataCount(chartMeta);
@@ -274,6 +278,9 @@ export class StudySummaryTab extends React.Component<
                 props.downloadTypes = ['Data'];
                 props.filterByCancerGenes = this.store.filterMutatedGenesTableByCancerGenes;
                 props.onChangeCancerGeneFilter = this.store.updateMutatedGenesTableByCancerGenesFilter;
+                props.alterationFilterEnabled =
+                    AppConfig.serverConfig.skin_show_settings_menu;
+                props.filterAlterations = this.store.isGlobalMutationFilterActive;
                 break;
             }
             case ChartTypeEnum.STRUCTURAL_VARIANT_GENES_TABLE: {
@@ -296,6 +303,9 @@ export class StudySummaryTab extends React.Component<
                 props.downloadTypes = ['Data'];
                 props.filterByCancerGenes = this.store.filterSVGenesTableByCancerGenes;
                 props.onChangeCancerGeneFilter = this.store.updateSVGenesTableByCancerGenesFilter;
+                props.alterationFilterEnabled =
+                    AppConfig.serverConfig.skin_show_settings_menu;
+                props.filterAlterations = this.store.isGlobalMutationFilterActive;
                 break;
             }
             case ChartTypeEnum.CNA_GENES_TABLE: {
@@ -317,6 +327,9 @@ export class StudySummaryTab extends React.Component<
                 props.downloadTypes = ['Data'];
                 props.filterByCancerGenes = this.store.filterCNAGenesTableByCancerGenes;
                 props.onChangeCancerGeneFilter = this.store.updateCNAGenesTableByCancerGenesFilter;
+                props.alterationFilterEnabled =
+                    AppConfig.serverConfig.skin_show_settings_menu;
+                props.filterAlterations = this.store.isGlobalAlterationFilterActive;
                 break;
             }
             case ChartTypeEnum.GENOMIC_PROFILES_TABLE: {

@@ -44,6 +44,7 @@ import AppConfig from 'appConfig';
 import SocialAuthButton from '../../shared/components/SocialAuthButton';
 import { ServerConfigHelpers } from '../../config/config';
 import {
+    AlterationMenuHeader,
     getButtonNameWithDownPointer,
     ChartMetaDataTypeEnum,
 } from './StudyViewUtils';
@@ -65,6 +66,8 @@ import $ from 'jquery';
 import { StudyViewComparisonGroup } from 'pages/groupComparison/GroupComparisonUtils';
 import { CustomChart } from 'shared/api/sessionServiceAPI';
 import { parse } from 'query-string';
+import SettingsMenu from 'shared/components/driverAnnotations/SettingsMenu';
+import ErrorScreen from 'shared/components/errorScreen/ErrorScreen';
 
 export interface IStudyViewPageProps {
     routing: any;
@@ -116,6 +119,7 @@ export default class StudyViewPage extends React.Component<
     @observable private toolbarLeft: number = 0;
 
     @observable showCustomSelectTooltip = false;
+    @observable showAlterationFilterTooltip = false;
     @observable private showReturnToDefaultChartListModal: boolean = false;
 
     constructor(props: IStudyViewPageProps) {
@@ -522,15 +526,7 @@ export default class StudyViewPage extends React.Component<
                 )}
 
                 {this.store.comparisonConfirmationModal}
-                {this.store.unknownQueriedIds.isComplete &&
-                    this.store.unknownQueriedIds.result.length > 0 && (
-                        <Alert bsStyle="danger">
-                            <span>
-                                Unknown/Unauthorized studies{' '}
-                                {this.store.unknownQueriedIds.result.join(', ')}
-                            </span>
-                        </Alert>
-                    )}
+
                 <LoadingIndicator
                     size={'big'}
                     isLoading={
@@ -785,6 +781,59 @@ export default class StudyViewPage extends React.Component<
                                                 </DefaultTooltip>
                                             </>
                                         )}
+                                        {AppConfig.serverConfig
+                                            .skin_show_settings_menu && (
+                                            <DefaultTooltip
+                                                trigger={['click']}
+                                                placement={'bottomLeft'}
+                                                overlay={
+                                                    <SettingsMenu
+                                                        store={this.store}
+                                                        infoElement={
+                                                            <AlterationMenuHeader
+                                                                includeCnaTable={
+                                                                    this.store
+                                                                        .hasCnaProfileData
+                                                                }
+                                                            />
+                                                        }
+                                                        customDriverSourceName={
+                                                            getBrowserWindow()
+                                                                .frontendConfig
+                                                                .serverConfig
+                                                                .oncoprint_custom_driver_annotation_binary_menu_label
+                                                        }
+                                                        showDriverAnnotationSection={
+                                                            this.store
+                                                                .doShowDriverAnnotationSectionInGlobalMenu
+                                                        }
+                                                        showTierAnnotationSection={
+                                                            this.store
+                                                                .doShowTierAnnotationSectionInGlobalMenu
+                                                        }
+                                                    />
+                                                }
+                                                visible={
+                                                    this
+                                                        .showAlterationFilterTooltip
+                                                }
+                                                onVisibleChange={visible => {
+                                                    this.showAlterationFilterTooltip = !!visible;
+                                                }}
+                                            >
+                                                <button
+                                                    data-test="AlterationFilterButton"
+                                                    style={{
+                                                        marginLeft: '10px',
+                                                    }}
+                                                    className="btn btn-primary btn-sm"
+                                                >
+                                                    {getButtonNameWithDownPointer(
+                                                        'Alteration Filter'
+                                                    )}
+                                                </button>
+                                            </DefaultTooltip>
+                                        )}
                                         {this.enableAddChartInTabs.includes(
                                             this.store.currentTab
                                         ) && (
@@ -893,6 +942,35 @@ export default class StudyViewPage extends React.Component<
         );
     }
 
+    private readonly body = MakeMobxView({
+        await: () => [this.store.unknownQueriedIds],
+        render: () => {
+            // we can tell if there are any valid studies
+            // by looking to see if there is anything in queriedPhysicalStudyIds
+            // we have to do this because studyIds property has the virtualStudy id (in that setting)
+            if (
+                this.store.unknownQueriedIds.result.length &&
+                this.store.queriedPhysicalStudyIds.result.length === 0
+            ) {
+                const pluralForm =
+                    this.store.unknownQueriedIds.result.length > 1
+                        ? 'Studies'
+                        : 'Study';
+                return (
+                    <ErrorScreen
+                        title={`Unknown/Unauthorized ${pluralForm}`}
+                        body={`The following studies are unknown or you lack privileges to view them:
+                            ${this.store.unknownQueriedIds.result.join(', ')}
+                            `}
+                    />
+                );
+            } else {
+                return this.content();
+            }
+        },
+        renderPending: () => <LoadingIndicator isLoading={true} />,
+    });
+
     componentWillUnmount(): void {
         this.store.destroy();
         clearInterval(this.toolbarLeftUpdater);
@@ -905,7 +983,7 @@ export default class StudyViewPage extends React.Component<
                 hideFooter={true}
                 className={'subhead-dark'}
             >
-                {this.content()}
+                {this.body.component}
             </PageLayout>
         );
     }

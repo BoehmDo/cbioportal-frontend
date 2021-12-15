@@ -222,10 +222,19 @@ export default class Mutations extends React.Component<
                         trackVisibility={
                             this.userSelectionStore.trackVisibility
                         }
+                        columnVisibility={
+                            this.userSelectionStore.columnVisibility
+                        }
+                        storeColumnVisibility={
+                            this.userSelectionStore.storeColumnVisibility
+                        }
                         discreteCNACache={this.props.store.discreteCNACache}
                         pubMedCache={this.props.store.pubMedCache}
                         cancerTypeCache={this.props.store.cancerTypeCache}
                         mutationCountCache={this.props.store.mutationCountCache}
+                        clinicalAttributeCache={
+                            this.props.store.clinicalAttributeCache
+                        }
                         genomeNexusCache={this.props.store.genomeNexusCache}
                         genomeNexusMutationAssessorCache={
                             this.props.store.genomeNexusMutationAssessorCache
@@ -245,6 +254,7 @@ export default class Mutations extends React.Component<
                         onTranscriptChange={this.onTranscriptChange}
                         onClickSettingMenu={this.onClickSettingMenu}
                         compactStyle={true}
+                        ptmSources={AppConfig.serverConfig.ptmSources}
                     />
                 </div>
             );
@@ -261,7 +271,7 @@ export default class Mutations extends React.Component<
     }
 
     @action.bound
-    protected onClickSettingMenu() {
-        this.props.store.resultsPageSettingsVisible = true;
+    protected onClickSettingMenu(visible: boolean) {
+        this.props.store.isSettingsMenuVisible = visible;
     }
 }

@@ -11,8 +11,7 @@ const ServerConfigDefaults: Partial<IServerConfig> = {
     g2s_url: 'https://g2s.genomenexus.org',
     mycancergenome_show: false,
 
-    digital_slide_archive_iframe_url:
-        'https://cancer.digitalslidearchive.org/index.html?patientId=',
+    digital_slide_archive_iframe_url: 'https://cancer.digitalslidearchive.org/',
     digital_slide_archive_meta_url:
         'https://api.digitalslidearchive.org/api/v1/tcga/image?caseName=',
 
@@ -63,6 +62,7 @@ const ServerConfigDefaults: Partial<IServerConfig> = {
     skin_documentation_markdown: true,
     skin_email_contact: 'cbioportal at googlegroups dot com',
     skin_documentation_faq: 'FAQ.md',
+    skin_footer_show_dev: false,
     skin_login_saml_registration_html: 'Sign in with MSK',
     skin_documentation_news: 'News.md',
     skin_documentation_oql: 'Onco-Query-Language.md',
@@ -71,6 +71,7 @@ const ServerConfigDefaults: Partial<IServerConfig> = {
     skin_right_nav_show_examples: true,
     skin_right_nav_show_testimonials: true,
     skin_right_nav_show_whats_new: true,
+    skin_right_nav_show_twitter: false,
     skin_citation_rule_text:
         'Please cite: <a href="http://cancerdiscovery.aacrjournals.org/content/2/5/401.abstract" target="_blank">Cerami et al., 2012</a> &amp; <a href="http://www.ncbi.nlm.nih.gov/pubmed/23550210" target="_blank">Gao et al., 2013</a>',
     skin_show_about_tab: true,
@@ -169,12 +170,23 @@ const ServerConfigDefaults: Partial<IServerConfig> = {
 
     skin_show_gsva: false,
 
+    skin_geneset_hierarchy_default_gsva_score: 0.5,
+
+    skin_geneset_hierarchy_default_p_value: 0.05,
+
     generic_assay_display_text:
         'TREATMENT_RESPONSE:Treatment Response,MUTATIONAL_SIGNATURE:Mutational Signature',
 
     saml_logout_local: false,
     patient_view_use_legacy_timeline: false,
     enable_request_body_gzip_compression: false,
+
+    referenceGenomeVersion: 'hg19',
+
+    skin_show_unauthorized_studies: false,
+
+    skin_global_message_for_unauthorized_studies:
+        'The study is unauthorized. You need to request access.',
 };
 
 export default ServerConfigDefaults;

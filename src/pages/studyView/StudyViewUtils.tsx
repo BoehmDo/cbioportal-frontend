@@ -10,6 +10,7 @@ import {
     GenomicDataCount,
     GenericAssayDataMultipleStudyFilter,
     GenericAssayData,
+    GeneFilterQuery,
 } from 'cbioportal-ts-api-client';
 import {
     CancerStudy,
@@ -31,7 +32,6 @@ import {
     ChartUserSetting,
     GenomicChart,
     GenericAssayChart,
-    StudyPageSettings,
 } from './StudyViewPageStore';
 import { StudyViewPageTabKeyEnum } from 'pages/studyView/StudyViewPageTabs';
 import { Layout } from 'react-grid-layout';
@@ -59,7 +59,6 @@ import { IStudyViewScatterPlotData } from './charts/scatterPlot/StudyViewScatter
 import { CNA_TO_ALTERATION } from 'pages/resultsView/enrichments/EnrichmentsUtil';
 import ComplexKeyMap from 'shared/lib/complexKeyDataStructures/ComplexKeyMap';
 import { Datalabel } from 'shared/lib/DataUtils';
-import { getSuffixOfMolecularProfile } from 'shared/lib/molecularProfileUtils';
 import {
     CNAProfilesEnum,
     StructuralVariantProfilesEnum,
@@ -70,6 +69,7 @@ import {
 } from 'cbioportal-ts-api-client/dist/generated/CBioPortalAPIInternal';
 import { ChartOption } from './addChartButton/AddChartButton';
 import { CNA_COLOR_AMP, CNA_COLOR_HOMDEL } from 'cbioportal-frontend-commons';
+import { observer } from 'mobx-react';
 
 // Cannot use ClinicalDataTypeEnum here for the strong type. The model in the type is not strongly typed
 export enum ClinicalDataTypeEnum {
@@ -159,8 +159,8 @@ export type MolecularProfileOption = {
     count: number;
     label: string;
     description: string;
-    sampleUniqueKeys: string[];
     dataType: string;
+    patientLevel?: boolean;
 };
 
 // DataBin is a generic type for ClinicalDataBin, GenomicDataBin and GenericAssayDataBin
@@ -740,7 +740,10 @@ export function getVirtualStudyDescription(
                 filterLines = filterLines.concat(
                     geneFilter.geneQueries
                         .map(geneQuery => {
-                            return geneQuery.join(', ').trim();
+                            return geneQuery
+                                .map(geneFilterQueryToOql)
+                                .join(', ')
+                                .trim();
                         })
                         .map(line => '  - ' + line)
                 );
@@ -2374,6 +2377,7 @@ export function getChartSettingsMap(
                 genericAssayChart.genericAssayEntityId;
             chartSetting.profileType = genericAssayChart.profileType;
             chartSetting.dataType = genericAssayChart.dataType;
+            chartSetting.patientLevelProfile = genericAssayChart.patientLevel;
         }
         if (clinicalDataBinFilterSet[id]) {
             if (clinicalDataBinFilterSet[id].disableLogScale) {
@@ -2692,45 +2696,6 @@ export function updateSavedUserPreferenceChartIds(
     return chartSettings;
 }
 
-export function getMolecularProfileOptions(
-    molecularProfiles: MolecularProfile[],
-    sampleUniqueKeysByMolecularProfileIdSet: { [id: string]: string[] },
-    filter?: (molecularProfile: MolecularProfile) => boolean
-): MolecularProfileOption[] {
-    return _.chain(molecularProfiles)
-        .filter(molecularProfile => {
-            if (filter) {
-                return filter(molecularProfile);
-            }
-            return true;
-        })
-        .groupBy(molecularProfile =>
-            getSuffixOfMolecularProfile(molecularProfile)
-        )
-        .map((profiles, value) => {
-            const uniqueProfiledSamples = _.chain(profiles)
-                .flatMap(
-                    molecularProfile =>
-                        sampleUniqueKeysByMolecularProfileIdSet[
-                            molecularProfile.molecularProfileId
-                        ] || []
-                )
-                .uniq()
-                .value();
-
-            return {
-                value: value,
-                count: uniqueProfiledSamples.length,
-                label: profiles[0].name,
-                description: profiles[0].description,
-                sampleUniqueKeys: uniqueProfiledSamples,
-                dataType: profiles[0].datatype,
-            };
-        })
-        .filter(record => record.count > 0)
-        .value();
-}
-
 export function convertClinicalDataBinsToDataBins(
     clinicalDataBins: ClinicalDataBin[]
 ): DataBin[] {
@@ -2956,6 +2921,263 @@ export function getMolecularProfileSamplesSet(
             return acc;
         },
         {}
+    );
+}
+
+export function geneFilterQueryToOql(query: GeneFilterQuery): string {
+    return query.alterations.length > 0
+        ? `${query.hugoGeneSymbol}:${query.alterations.join(' ')}`
+        : query.hugoGeneSymbol;
+}
+
+export function geneFilterQueryFromOql(
+    oql: string,
+    includeDriver?: boolean,
+    includeVUS?: boolean,
+    includeUnknownOncogenicity?: boolean,
+    selectedDriverTiers?: { [tier: string]: boolean },
+    includeUnknownDriverTier?: boolean,
+    includeGermline?: boolean,
+    includeSomatic?: boolean,
+    includeUnknownStatus?: boolean
+): GeneFilterQuery {
+    const [part1, part2]: string[] = oql.split(':');
+    const alterations = part2 ? part2.trim().split(' ') : [];
+    const hugoGeneSymbol = part1.trim();
+    return {
+        hugoGeneSymbol,
+        entrezGeneId: 0,
+        alterations: alterations as (
+            | 'HOMDEL'
+            | 'AMP'
+            | 'GAIN'
+            | 'DIPLOID'
+            | 'HETLOSS'
+        )[],
+        includeDriver: includeDriver === undefined ? true : includeDriver,
+        includeVUS: includeVUS === undefined ? true : includeVUS,
+        includeUnknownOncogenicity:
+            includeUnknownOncogenicity === undefined
+                ? true
+                : includeUnknownOncogenicity,
+        tiersBooleanMap:
+            selectedDriverTiers || ({} as { [tier: string]: boolean }),
+        includeUnknownTier:
+            includeUnknownDriverTier === undefined
+                ? true
+                : includeUnknownDriverTier,
+        includeGermline: includeGermline === undefined ? true : includeGermline,
+        includeSomatic: includeSomatic === undefined ? true : includeSomatic,
+        includeUnknownStatus:
+            includeUnknownStatus === undefined ? true : includeUnknownStatus,
+    };
+}
+
+export function ensureBackwardCompatibilityOfFilters(
+    filters: Partial<StudyViewFilter>
+) {
+    if (filters.geneFilters && filters.geneFilters.length) {
+        filters.geneFilters.forEach(f => {
+            f.geneQueries = f.geneQueries.map(arr => {
+                return arr.map(inner => {
+                    if (typeof inner === 'string') {
+                        return geneFilterQueryFromOql(inner);
+                    } else {
+                        return inner;
+                    }
+                });
+            });
+        });
+    }
+
+    return filters;
+}
+
+export const AlterationMenuHeader: React.FunctionComponent<{
+    includeCnaTable: boolean;
+}> = observer(({ includeCnaTable }) => {
+    if (includeCnaTable) {
+        return (
+            <span style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+                Select the types of alterations to count in the{' '}
+                <i>Mutated Genes</i>, <i>CNA Genes</i> and <i>Fusion Genes</i>{' '}
+                tables.
+            </span>
+        );
+    } else {
+        return (
+            <span style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+                Select the types of alterations to count in the{' '}
+                <i>Mutated Genes</i> and <i>Fusion Genes</i> tables.
+            </span>
+        );
+    }
+});
+
+export function buildSelectedDriverTiersMap(
+    selectedTiers: string[],
+    allTiers: string[]
+): { [tier: string]: boolean } {
+    return _(allTiers)
+        .keyBy()
+        .mapValues((value, tier) => selectedTiers.includes(tier))
+        .value();
+}
+
+export const FilterIconMessage: React.FunctionComponent<{
+    chartType: ChartType;
+    geneFilterQuery: GeneFilterQuery;
+}> = observer(({ chartType, geneFilterQuery }) => {
+    const annotationFilterIsActive = annotationFilterActive(
+        geneFilterQuery.includeDriver,
+        geneFilterQuery.includeVUS,
+        geneFilterQuery.includeUnknownOncogenicity
+    );
+    const tierFilterIsActive = driverTierFilterActive(
+        geneFilterQuery.tiersBooleanMap,
+        geneFilterQuery.includeUnknownTier
+    );
+    const statusFilterIsActive = statusFilterActive(
+        geneFilterQuery.includeGermline,
+        geneFilterQuery.includeSomatic,
+        geneFilterQuery.includeUnknownStatus
+    );
+    const isMutationType =
+        chartType === ChartTypeEnum.MUTATED_GENES_TABLE ||
+        chartType === ChartTypeEnum.STRUCTURAL_VARIANT_GENES_TABLE;
+    if (
+        !annotationFilterIsActive &&
+        !tierFilterIsActive &&
+        (!statusFilterIsActive || !isMutationType)
+    )
+        return null;
+
+    const driverFilterTextElements: string[] = [];
+    if (annotationFilterIsActive) {
+        geneFilterQuery.includeDriver &&
+            driverFilterTextElements.push('driver');
+        geneFilterQuery.includeVUS &&
+            driverFilterTextElements.push('passenger');
+        geneFilterQuery.includeUnknownOncogenicity &&
+            driverFilterTextElements.push('unknown');
+    }
+
+    const statusFilterTextElements: string[] = [];
+    if (statusFilterIsActive && isMutationType) {
+        geneFilterQuery.includeGermline &&
+            statusFilterTextElements.push('germline');
+        geneFilterQuery.includeSomatic &&
+            statusFilterTextElements.push('somatic');
+        geneFilterQuery.includeUnknownStatus &&
+            statusFilterTextElements.push('unknown');
+    }
+
+    const tierNames = tierFilterIsActive
+        ? _(geneFilterQuery.tiersBooleanMap)
+              .pickBy()
+              .keys()
+              .value()
+        : [];
+    if (tierFilterIsActive && geneFilterQuery.includeUnknownTier)
+        tierNames.push('unknown');
+
+    let driverFilterText = '';
+    if (driverFilterTextElements.length === 1)
+        driverFilterText = driverFilterTextElements[0];
+    else if (driverFilterTextElements.length > 1)
+        driverFilterText =
+            driverFilterTextElements.slice(0, -1).join(', ') +
+            ' or ' +
+            driverFilterTextElements.slice(-1);
+
+    let statusFilterText = '';
+    if (statusFilterTextElements.length === 1)
+        statusFilterText = statusFilterTextElements[0];
+    else if (statusFilterTextElements.length > 1)
+        statusFilterText =
+            statusFilterTextElements.slice(0, -1).join(', ') +
+            ' or ' +
+            statusFilterTextElements.slice(-1);
+
+    let tierFilterText = '';
+    if (tierNames.length === 1) tierFilterText = tierNames[0];
+    else if (tierNames.length > 1)
+        tierFilterText =
+            tierNames.slice(0, -1).join(', ') + ' or ' + tierNames.slice(-1);
+
+    return (
+        <div data-test={'groupedGeneFilterIcons'} className={styles.content}>
+            {driverFilterText && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                    }}
+                >
+                    <span>annotation:</span>&nbsp;
+                    <span>{driverFilterText}</span>
+                </div>
+            )}
+            {statusFilterText && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                    }}
+                >
+                    <span>status:</span>&nbsp;
+                    <span>{statusFilterText}</span>
+                </div>
+            )}
+            {tierFilterText && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                    }}
+                >
+                    <span>category:</span>&nbsp;
+                    <span>{tierFilterText}</span>
+                </div>
+            )}
+        </div>
+    );
+});
+
+export function driverTierFilterActive(
+    tiersMap: { [tier: string]: boolean },
+    includeUnknownTier: boolean
+): boolean {
+    const availableTiers = _.keys(tiersMap);
+    const selectedTiers = _(tiersMap)
+        .pickBy()
+        .keys()
+        .value();
+    return (
+        !(selectedTiers.length === 0 && !includeUnknownTier) &&
+        !(selectedTiers.length === availableTiers.length && includeUnknownTier)
+    );
+}
+
+export function annotationFilterActive(
+    includeDriver: boolean,
+    includeVUS: boolean,
+    includeUnknownOncogenicity: boolean
+): boolean {
+    return (
+        !(includeDriver && includeVUS && includeUnknownOncogenicity) &&
+        !(!includeDriver && !includeVUS && !includeUnknownOncogenicity)
+    );
+}
+
+export function statusFilterActive(
+    includeGermline: boolean,
+    includeSomatic: boolean,
+    includeUnknownStatus: boolean
+): boolean {
+    return (
+        !(includeGermline && includeSomatic && includeUnknownStatus) &&
+        !(!includeGermline && !includeSomatic && !includeUnknownStatus)
     );
 }
 

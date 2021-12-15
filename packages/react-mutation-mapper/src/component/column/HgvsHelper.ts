@@ -1,10 +1,10 @@
 import { VariantAnnotation } from 'genome-nexus-ts-api-client';
 import {
     generateHgvsgByMutation,
-    getVariantAnnotation,
     Mutation,
     RemoteData,
 } from 'cbioportal-utils';
+import { getAnnotation } from './VariantAnnotationHelper';
 
 export function getHgvsgColumnData(mutation: Mutation): string | null {
     return generateHgvsgByMutation(mutation) || null;
@@ -27,11 +27,12 @@ export function getHgvscColumnData(
     }
 
     let data: string | null =
-        variantAnnotation.annotation_summary.transcriptConsequenceSummary.hgvsc;
+        variantAnnotation.annotation_summary?.transcriptConsequenceSummary
+            ?.hgvsc || null;
 
     // return data from transcriptConsequenceSummaries if transcript dropdown is enabled
     if (selectedTranscriptId) {
-        const transcriptConsequenceSummary = variantAnnotation.annotation_summary.transcriptConsequenceSummaries.find(
+        const transcriptConsequenceSummary = variantAnnotation.annotation_summary?.transcriptConsequenceSummaries?.find(
             transcriptConsequenceSummary =>
                 transcriptConsequenceSummary.transcriptId ===
                 selectedTranscriptId
@@ -42,15 +43,4 @@ export function getHgvscColumnData(
     }
 
     return data;
-}
-
-function getAnnotation(
-    mutation?: Mutation,
-    indexedVariantAnnotations?: RemoteData<
-        { [genomicLocation: string]: VariantAnnotation } | undefined
-    >
-) {
-    return indexedVariantAnnotations
-        ? getVariantAnnotation(mutation, indexedVariantAnnotations.result)
-        : undefined;
 }

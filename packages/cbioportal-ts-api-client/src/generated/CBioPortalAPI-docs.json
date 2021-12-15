@@ -144,7 +144,6 @@
             "enum": [
               "cancerTypeId",
               "name",
-              "clinicalTrialKeywords",
               "dedicatedColor",
               "shortName",
               "parent"
@@ -494,14 +493,11 @@
         "parameters": [
           {
             "in": "body",
-            "name": "sampleMolecularIdentifiers",
-            "description": "List of Molecular Profile ID and Sample ID pairs",
+            "name": "genePanelDataMultipleStudyFilter",
+            "description": "Gene panel data filter object",
             "required": true,
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/SampleMolecularIdentifier"
-              }
+              "$ref": "#/definitions/GenePanelDataMultipleStudyFilter"
             }
           }
         ],
@@ -2726,7 +2722,6 @@
               "studyId",
               "cancerTypeId",
               "name",
-              "shortName",
               "description",
               "publicStudy",
               "pmid",
@@ -4359,6 +4354,54 @@
       },
       "title": "AlleleSpecificCopyNumber"
     },
+    "AlterationFilter": {
+      "type": "object",
+      "properties": {
+        "copyNumberAlterationEventTypes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "includeDriver": {
+          "type": "boolean"
+        },
+        "includeGermline": {
+          "type": "boolean"
+        },
+        "includeSomatic": {
+          "type": "boolean"
+        },
+        "includeUnknownOncogenicity": {
+          "type": "boolean"
+        },
+        "includeUnknownStatus": {
+          "type": "boolean"
+        },
+        "includeUnknownTier": {
+          "type": "boolean"
+        },
+        "includeVUS": {
+          "type": "boolean"
+        },
+        "mutationEventTypes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "structuralVariants": {
+          "type": "boolean"
+        },
+        "tiersBooleanMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      },
+      "title": "AlterationFilter"
+    },
     "AndedPatientTreatmentFilters": {
       "type": "object",
       "properties": {
@@ -4456,12 +4499,13 @@
           "type": "integer",
           "format": "int32"
         },
-        "sequencedSampleCount": {
+        "massSpectrometrySampleCount": {
           "type": "integer",
           "format": "int32"
         },
-        "shortName": {
-          "type": "string"
+        "sequencedSampleCount": {
+          "type": "integer",
+          "format": "int32"
         },
         "status": {
           "type": "integer",
@@ -4812,7 +4856,7 @@
           "items": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/definitions/GeneFilterQuery"
             }
           }
         },
@@ -4824,6 +4868,59 @@
         }
       },
       "title": "GeneFilter"
+    },
+    "GeneFilterQuery": {
+      "type": "object",
+      "properties": {
+        "alterations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "AMP",
+              "GAIN",
+              "DIPLOID",
+              "HETLOSS",
+              "HOMDEL"
+            ]
+          }
+        },
+        "entrezGeneId": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "hugoGeneSymbol": {
+          "type": "string"
+        },
+        "includeDriver": {
+          "type": "boolean"
+        },
+        "includeGermline": {
+          "type": "boolean"
+        },
+        "includeSomatic": {
+          "type": "boolean"
+        },
+        "includeUnknownOncogenicity": {
+          "type": "boolean"
+        },
+        "includeUnknownStatus": {
+          "type": "boolean"
+        },
+        "includeUnknownTier": {
+          "type": "boolean"
+        },
+        "includeVUS": {
+          "type": "boolean"
+        },
+        "tiersBooleanMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      },
+      "title": "GeneFilterQuery"
     },
     "GenePanel": {
       "type": "object",
@@ -4897,6 +4994,24 @@
         }
       },
       "title": "GenePanelDataFilter"
+    },
+    "GenePanelDataMultipleStudyFilter": {
+      "type": "object",
+      "properties": {
+        "molecularProfileIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sampleMolecularIdentifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SampleMolecularIdentifier"
+          }
+        }
+      },
+      "title": "GenePanelDataMultipleStudyFilter"
     },
     "GenePanelToGene": {
       "type": "object",
@@ -5128,6 +5243,7 @@
       "type": "object",
       "required": [
         "molecularProfileId",
+        "patientLevel",
         "studyId"
       ],
       "properties": {
@@ -5167,6 +5283,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "patientLevel": {
+          "type": "boolean"
         },
         "pivotThreshold": {
           "type": "number",
@@ -5276,6 +5395,12 @@
         },
         "mutationType": {
           "type": "string"
+        },
+        "namespaceColumns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
         },
         "ncbiBuild": {
           "type": "string"
@@ -5901,6 +6026,9 @@
     "StudyViewFilter": {
       "type": "object",
       "properties": {
+        "alterationFilter": {
+          "$ref": "#/definitions/AlterationFilter"
+        },
         "caseLists": {
           "type": "array",
           "items": {
@@ -5977,9 +6105,6 @@
       ],
       "properties": {
         "cancerTypeId": {
-          "type": "string"
-        },
-        "clinicalTrialKeywords": {
           "type": "string"
         },
         "dedicatedColor": {

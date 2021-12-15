@@ -159,8 +159,8 @@ import { getFilteredMolecularProfilesByAlterationType } from 'pages/studyView/St
 import {
     getMyCancerGenomeData,
     getMyVariantInfoAnnotationsFromIndexedVariantAnnotations,
-    ICivicGene,
-    ICivicVariant,
+    ICivicGeneIndex,
+    ICivicVariantIndex,
     IHotspotIndex,
     IMyCancerGenomeData,
     IMyVariantInfoIndex,
@@ -1113,6 +1113,7 @@ export class PatientViewPageStore {
                     [
                         GENOME_NEXUS_ARG_FIELD_ENUM.ANNOTATION_SUMMARY,
                         GENOME_NEXUS_ARG_FIELD_ENUM.HOTSPOTS,
+                        GENOME_NEXUS_ARG_FIELD_ENUM.CLINVAR,
                         AppConfig.serverConfig.show_signal
                             ? GENOME_NEXUS_ARG_FIELD_ENUM.SIGNAL
                             : '',
@@ -1563,8 +1564,10 @@ export class PatientViewPageStore {
                 if (sampleMolecularIdentifiers.length) {
                     genePanelData = await client.fetchGenePanelDataInMultipleMolecularProfilesUsingPOST(
                         {
-                            sampleMolecularIdentifiers,
-                        }
+                            genePanelDataMultipleStudyFilter: {
+                                sampleMolecularIdentifiers,
+                            },
+                        } as any
                     );
                 }
 
@@ -1815,7 +1818,7 @@ export class PatientViewPageStore {
         ONCOKB_DEFAULT
     );
 
-    readonly civicGenes = remoteData<ICivicGene | undefined>(
+    readonly civicGenes = remoteData<ICivicGeneIndex | undefined>(
         {
             await: () => [
                 this.mutationData,
@@ -1836,7 +1839,7 @@ export class PatientViewPageStore {
         undefined
     );
 
-    readonly civicVariants = remoteData<ICivicVariant | undefined>(
+    readonly civicVariants = remoteData<ICivicVariantIndex | undefined>(
         {
             await: () => [
                 this.civicGenes,
@@ -1849,7 +1852,7 @@ export class PatientViewPageStore {
                     this.civicGenes.result
                 ) {
                     return fetchCivicVariants(
-                        this.civicGenes.result as ICivicGene,
+                        this.civicGenes.result as ICivicGeneIndex,
                         this.mutationData,
                         this.uncalledMutationData
                     );
@@ -1916,7 +1919,7 @@ export class PatientViewPageStore {
         ONCOKB_DEFAULT
     );
 
-    readonly cnaCivicGenes = remoteData<ICivicGene | undefined>(
+    readonly cnaCivicGenes = remoteData<ICivicGeneIndex | undefined>(
         {
             await: () => [this.discreteCNAData, this.clinicalDataForSamples],
             invoke: async () =>
@@ -1930,13 +1933,13 @@ export class PatientViewPageStore {
         undefined
     );
 
-    readonly cnaCivicVariants = remoteData<ICivicVariant | undefined>(
+    readonly cnaCivicVariants = remoteData<ICivicVariantIndex | undefined>(
         {
             await: () => [this.civicGenes, this.mutationData],
             invoke: async () => {
                 if (this.cnaCivicGenes.status == 'complete') {
                     return fetchCivicVariants(
-                        this.cnaCivicGenes.result as ICivicGene
+                        this.cnaCivicGenes.result as ICivicGeneIndex
                     );
                 }
             },
@@ -2550,9 +2553,9 @@ export class PatientViewPageStore {
     };
 
     checkPermission = async (): Promise<boolean[]> => {
-        let checkUrl = this.getMtbJsonStoreUrl(this.getSafePatientId()) + '/permission';
+        let checkUrl =
+            this.getMtbJsonStoreUrl(this.getSafePatientId()) + '/permission';
         return checkPermissionUsingGET(checkUrl, this.getSafeStudyId());
-        
     };
 
     getMtbJsonStoreUrl = (id: string) => {
@@ -2571,15 +2574,15 @@ export class PatientViewPageStore {
         )
             port = ':' + AppConfig.fhirspark.port;
         return '//' + host + port + '/mtb/' + id;
-    }
+    };
 
     private getSafePatientId = () => {
         return encodeURIComponent(this.patientId);
     };
-    
+
     private getSafeStudyId = () => {
         return encodeURIComponent(this.studyId);
-    }
+    };
 
     readonly getStudiesFromOncoKBSortedByCondition = remoteData<
         IOncoKBStudyDictionary

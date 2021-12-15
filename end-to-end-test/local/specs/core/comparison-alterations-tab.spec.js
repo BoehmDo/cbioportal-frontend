@@ -9,6 +9,8 @@ var selectReactSelectOption = require('../../../shared/specUtils')
     .selectReactSelectOption;
 var waitForNetworkQuiet = require('../../../shared/specUtils')
     .waitForNetworkQuiet;
+var openAlterationTypeSelectionMenu = require('../../../shared/specUtils')
+    .openAlterationTypeSelectionMenu;
 
 const CBIOPORTAL_URL = process.env.CBIOPORTAL_URL.replace(/\/$/, '');
 const resultsViewComparisonTab = `${CBIOPORTAL_URL}/results/comparison?Action=Submit&RPPA_SCORE_THRESHOLD=2.0&Z_SCORE_THRESHOLD=2.0&cancer_study_list=study_es_0&case_set_id=study_es_0_cnaseq&data_priority=0&gene_list=BRCA1%2520BRCA2&genetic_profile_ids_PROFILE_COPY_NUMBER_ALTERATION=study_es_0_gistic&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=study_es_0_mutations&profileFilter=0&tab_index=tab_visualize&comparison_subtab=alterations`;
@@ -17,6 +19,7 @@ if (useExternalFrontend) {
     describe('comparison alterations tab', function() {
         beforeEach(() => {
             loadAlterationsTab();
+            openAlterationTypeSelectionMenu();
         });
 
         it('shows basic counts', function() {
@@ -30,20 +33,21 @@ if (useExternalFrontend) {
             clickAlterationTypeCheckBox('Copy Number Alterations');
             $('[data-test=buttonSelectAlterations]').click();
             $('div=No data/result available').waitForExist();
-            assert($('div=No data/result available').isVisible());
+            assert($('div=No data/result available').isDisplayed());
         });
 
         it('filters mutation types', function() {
             clickAlterationTypeCheckBox('Copy Number Alterations');
             clickAlterationTypeCheckBox('Structural Variants / Fusions');
             submitEnrichmentRequest();
-            $('[data-test=LazyMobXTable]').waitForVisible();
+            $('[data-test=LazyMobXTable]').waitForDisplayed();
             var rows = $$('[data-test=LazyMobXTable] tbody tr');
             assert.strictEqual(rows.length, 8, 'table has 8 rows');
+            openAlterationTypeSelectionMenu();
             clickAlterationTypeCheckBox('Mutations');
             clickAlterationTypeCheckBox('Frameshift Deletion');
             submitEnrichmentRequest();
-            $('[data-test=LazyMobXTable]').waitForVisible();
+            $('[data-test=LazyMobXTable]').waitForDisplayed();
             rows = $$('[data-test=LazyMobXTable] tbody tr');
             assert.strictEqual(rows.length, 2, 'table has 2 rows');
         });
@@ -51,11 +55,12 @@ if (useExternalFrontend) {
         it('filters CNA types', function() {
             clickAlterationTypeCheckBox('Mutations');
             submitEnrichmentRequest();
-            $('[data-test=LazyMobXTable]').waitForVisible();
+            $('[data-test=LazyMobXTable]').waitForDisplayed();
             assert.strictEqual(selectUnalteredCount('ACAP3'), '9 (1.16%)');
+            openAlterationTypeSelectionMenu();
             clickAlterationTypeCheckBox('Deletion');
             submitEnrichmentRequest();
-            $('[data-test=LazyMobXTable]').waitForVisible();
+            $('[data-test=LazyMobXTable]').waitForDisplayed();
             assert.strictEqual(selectUnalteredCount('ACAP3'), '7 (0.90%)');
         });
     });
@@ -65,11 +70,11 @@ if (useExternalFrontend) {
 // Multiple loading attempts are needed in some cases to show the
 // enrichment panels and make the tests pass reliably.
 var loadAlterationsTab = () => {
-    var timeIntervals = [3000, 4000, 5000, 5000, 10000];
+    var timeIntervals = [3000, 4000, 5000, 5000, 10000, 30000, 100000];
     for (const timeInterval of timeIntervals) {
         goToUrlAndSetLocalStorage(resultsViewComparisonTab, true);
         browser.pause(timeInterval);
-        if ($('[data-test=GroupComparisonAlterationEnrichments]').isVisible())
+        if ($('[data-test=GroupComparisonAlterationEnrichments]').isDisplayed())
             break;
     }
 };
@@ -106,5 +111,7 @@ var clickAlterationTypeCheckBox = name => {
 
 var submitEnrichmentRequest = () => {
     $('[data-test=buttonSelectAlterations]').click();
-    $('[data-test=GroupComparisonAlterationEnrichments]').waitForExist(10000);
+    $('[data-test=GroupComparisonAlterationEnrichments]').waitForExist({
+        timeout: 10000,
+    });
 };

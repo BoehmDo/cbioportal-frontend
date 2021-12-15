@@ -19,6 +19,30 @@ export type AlleleSpecificCopyNumber = {
         'totalCopyNumber': number
 
 };
+export type AlterationFilter = {
+    'copyNumberAlterationEventTypes': {}
+
+    'includeDriver': boolean
+
+        'includeGermline': boolean
+
+        'includeSomatic': boolean
+
+        'includeUnknownOncogenicity': boolean
+
+        'includeUnknownStatus': boolean
+
+        'includeUnknownTier': boolean
+
+        'includeVUS': boolean
+
+        'mutationEventTypes': {}
+
+        'structuralVariants': boolean
+
+        'tiersBooleanMap': {}
+
+};
 export type AndedPatientTreatmentFilters = {
     'filters': Array < OredPatientTreatmentFilters >
 
@@ -66,13 +90,15 @@ export type CancerStudy = {
 
         'rppaSampleCount': number
 
-        'sequencedSampleCount': number
+        'massSpectrometrySampleCount': number
 
-        'shortName': string
+        'sequencedSampleCount': number
 
         'status': number
 
         'studyId': string
+
+        'isAuthorized': boolean
 
 };
 export type CancerStudyTags = {
@@ -226,10 +252,34 @@ export type Gene = {
 
 };
 export type GeneFilter = {
-    'geneQueries': Array < Array < string >
+    'geneQueries': Array < Array < GeneFilterQuery >
         >
 
         'molecularProfileIds': Array < string >
+
+};
+export type GeneFilterQuery = {
+    'alterations': Array < "AMP" | "GAIN" | "DIPLOID" | "HETLOSS" | "HOMDEL" >
+
+        'entrezGeneId': number
+
+        'hugoGeneSymbol': string
+
+        'includeDriver': boolean
+
+        'includeGermline': boolean
+
+        'includeSomatic': boolean
+
+        'includeUnknownOncogenicity': boolean
+
+        'includeUnknownStatus': boolean
+
+        'includeUnknownTier': boolean
+
+        'includeVUS': boolean
+
+        'tiersBooleanMap': {}
 
 };
 export type GenePanel = {
@@ -262,6 +312,12 @@ export type GenePanelDataFilter = {
     'sampleIds': Array < string >
 
         'sampleListId': string
+
+};
+export type GenePanelDataMultipleStudyFilter = {
+    'molecularProfileIds': Array < string >
+
+        'sampleMolecularIdentifiers': Array < SampleMolecularIdentifier >
 
 };
 export type GenePanelToGene = {
@@ -365,6 +421,8 @@ export type MolecularProfile = {
 
         'name': string
 
+        'patientLevel': boolean
+
         'pivotThreshold': number
 
         'showProfileInAnalysisTab': boolean
@@ -422,6 +480,8 @@ export type Mutation = {
         'mutationStatus': string
 
         'mutationType': string
+
+        'namespaceColumns': {}
 
         'ncbiBuild': string
 
@@ -715,7 +775,9 @@ export type StructuralVariantFilter = {
 
 };
 export type StudyViewFilter = {
-    'caseLists': Array < Array < string >
+    'alterationFilter': AlterationFilter
+
+        'caseLists': Array < Array < string >
         >
 
         'clinicalDataFilters': Array < ClinicalDataFilter >
@@ -742,8 +804,6 @@ export type StudyViewFilter = {
 };
 export type TypeOfCancer = {
     'cancerTypeId': string
-
-        'clinicalTrialKeywords': string
 
         'dedicatedColor': string
 
@@ -814,7 +874,7 @@ export default class CBioPortalAPI {
         'pageNumber' ? : number,
         'pageSize' ? : number,
         'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-        'sortBy' ? : "cancerTypeId" | "name" | "clinicalTrialKeywords" | "dedicatedColor" | "shortName" | "parent",
+        'sortBy' ? : "cancerTypeId" | "name" | "dedicatedColor" | "shortName" | "parent",
         $queryParameters ? : any
     }): string {
         let queryParameters: any = {};
@@ -864,7 +924,7 @@ export default class CBioPortalAPI {
         'pageNumber' ? : number,
         'pageSize' ? : number,
         'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-        'sortBy' ? : "cancerTypeId" | "name" | "clinicalTrialKeywords" | "dedicatedColor" | "shortName" | "parent",
+        'sortBy' ? : "cancerTypeId" | "name" | "dedicatedColor" | "shortName" | "parent",
         $queryParameters ? : any,
             $domain ? : string
     }): Promise < request.Response > {
@@ -926,7 +986,7 @@ export default class CBioPortalAPI {
             'pageNumber' ? : number,
             'pageSize' ? : number,
             'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-            'sortBy' ? : "cancerTypeId" | "name" | "clinicalTrialKeywords" | "dedicatedColor" | "shortName" | "parent",
+            'sortBy' ? : "cancerTypeId" | "name" | "dedicatedColor" | "shortName" | "parent",
             $queryParameters ? : any,
                 $domain ? : string
         }): Promise < Array < TypeOfCancer >
@@ -1431,7 +1491,7 @@ export default class CBioPortalAPI {
             });
         };
     fetchGenePanelDataInMultipleMolecularProfilesUsingPOSTURL(parameters: {
-        'sampleMolecularIdentifiers': Array < SampleMolecularIdentifier > ,
+        'genePanelDataMultipleStudyFilter': GenePanelDataMultipleStudyFilter,
         $queryParameters ? : any
     }): string {
         let queryParameters: any = {};
@@ -1451,10 +1511,10 @@ export default class CBioPortalAPI {
      * Fetch gene panel data
      * @method
      * @name CBioPortalAPI#fetchGenePanelDataInMultipleMolecularProfilesUsingPOST
-     * @param {} sampleMolecularIdentifiers - List of Molecular Profile ID and Sample ID pairs
+     * @param {} genePanelDataMultipleStudyFilter - Gene panel data filter object
      */
     fetchGenePanelDataInMultipleMolecularProfilesUsingPOSTWithHttpInfo(parameters: {
-        'sampleMolecularIdentifiers': Array < SampleMolecularIdentifier > ,
+        'genePanelDataMultipleStudyFilter': GenePanelDataMultipleStudyFilter,
         $queryParameters ? : any,
         $domain ? : string
     }): Promise < request.Response > {
@@ -1470,12 +1530,12 @@ export default class CBioPortalAPI {
             headers['Accept'] = 'application/json';
             headers['Content-Type'] = 'application/json';
 
-            if (parameters['sampleMolecularIdentifiers'] !== undefined) {
-                body = parameters['sampleMolecularIdentifiers'];
+            if (parameters['genePanelDataMultipleStudyFilter'] !== undefined) {
+                body = parameters['genePanelDataMultipleStudyFilter'];
             }
 
-            if (parameters['sampleMolecularIdentifiers'] === undefined) {
-                reject(new Error('Missing required  parameter: sampleMolecularIdentifiers'));
+            if (parameters['genePanelDataMultipleStudyFilter'] === undefined) {
+                reject(new Error('Missing required  parameter: genePanelDataMultipleStudyFilter'));
                 return;
             }
 
@@ -1495,10 +1555,10 @@ export default class CBioPortalAPI {
      * Fetch gene panel data
      * @method
      * @name CBioPortalAPI#fetchGenePanelDataInMultipleMolecularProfilesUsingPOST
-     * @param {} sampleMolecularIdentifiers - List of Molecular Profile ID and Sample ID pairs
+     * @param {} genePanelDataMultipleStudyFilter - Gene panel data filter object
      */
     fetchGenePanelDataInMultipleMolecularProfilesUsingPOST(parameters: {
-            'sampleMolecularIdentifiers': Array < SampleMolecularIdentifier > ,
+            'genePanelDataMultipleStudyFilter': GenePanelDataMultipleStudyFilter,
             $queryParameters ? : any,
             $domain ? : string
         }): Promise < Array < GenePanelData >
@@ -3934,7 +3994,7 @@ export default class CBioPortalAPI {
          * @param {integer} pageNumber - Page number of the result list
          * @param {integer} pageSize - Page size of the result list
          * @param {string} projection - Level of detail of the response
-        
+
     */
     getAllPatientsUsingGETWithHttpInfo(parameters: {
         'direction' ? : "ASC" | "DESC",
@@ -3999,7 +4059,7 @@ export default class CBioPortalAPI {
          * @param {integer} pageNumber - Page number of the result list
          * @param {integer} pageSize - Page size of the result list
          * @param {string} projection - Level of detail of the response
-        
+
     */
     getAllPatientsUsingGET(parameters: {
             'direction' ? : "ASC" | "DESC",
@@ -4833,7 +4893,7 @@ export default class CBioPortalAPI {
         'pageNumber' ? : number,
         'pageSize' ? : number,
         'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-        'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "shortName" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
+        'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
         $queryParameters ? : any
     }): string {
         let queryParameters: any = {};
@@ -4889,7 +4949,7 @@ export default class CBioPortalAPI {
         'pageNumber' ? : number,
         'pageSize' ? : number,
         'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-        'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "shortName" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
+        'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
         $queryParameters ? : any,
             $domain ? : string
     }): Promise < request.Response > {
@@ -4957,7 +5017,7 @@ export default class CBioPortalAPI {
             'pageNumber' ? : number,
             'pageSize' ? : number,
             'projection' ? : "ID" | "SUMMARY" | "DETAILED" | "META",
-            'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "shortName" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
+            'sortBy' ? : "studyId" | "cancerTypeId" | "name" | "description" | "publicStudy" | "pmid" | "citation" | "groups" | "status" | "importDate",
             $queryParameters ? : any,
                 $domain ? : string
         }): Promise < Array < CancerStudy >
@@ -5907,7 +5967,7 @@ export default class CBioPortalAPI {
          * @param {integer} pageNumber - Page number of the result list
          * @param {integer} pageSize - Page size of the result list
          * @param {string} projection - Level of detail of the response
-        
+
          * @param {string} studyId - Study ID e.g. acc_tcga
     */
     getAllPatientsInStudyUsingGETWithHttpInfo(parameters: {
@@ -5975,7 +6035,7 @@ export default class CBioPortalAPI {
          * @param {integer} pageNumber - Page number of the result list
          * @param {integer} pageSize - Page size of the result list
          * @param {string} projection - Level of detail of the response
-        
+
          * @param {string} studyId - Study ID e.g. acc_tcga
     */
     getAllPatientsInStudyUsingGET(parameters: {

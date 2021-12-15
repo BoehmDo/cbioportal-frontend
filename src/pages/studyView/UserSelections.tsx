@@ -7,21 +7,24 @@ import {
     DataFilterValue,
     AndedPatientTreatmentFilters,
     AndedSampleTreatmentFilters,
+    GeneFilterQuery,
     PatientTreatmentFilter,
     SampleTreatmentFilter,
 } from 'cbioportal-ts-api-client';
 import {
     DataType,
-    getUniqueKeyFromMolecularProfileIds,
+    FilterIconMessage,
     ChartType,
     getGenomicChartUniqueKey,
     getGenericAssayChartUniqueKey,
 } from 'pages/studyView/StudyViewUtils';
 import {
     ChartMeta,
+    geneFilterQueryToOql,
     getCNAColorByAlteration,
     getPatientIdentifiers,
     getSelectedGroupNames,
+    getUniqueKeyFromMolecularProfileIds,
     intervalFiltersDisplayValue,
     StudyViewFilterWithSampleIdentifierFilters,
 } from 'pages/studyView/StudyViewUtils';
@@ -39,7 +42,7 @@ import { DefaultTooltip } from 'cbioportal-frontend-commons';
 import {
     OredPatientTreatmentFilters,
     OredSampleTreatmentFilters,
-} from 'cbioportal-ts-api-client/dist/generated/CBioPortalAPIInternal';
+} from 'cbioportal-ts-api-client';
 import { ClinicalDataFilter } from 'cbioportal-ts-api-client/dist/generated/CBioPortalAPI';
 import {
     STRUCTURAL_VARIANT_COLOR,
@@ -48,7 +51,7 @@ import {
 
 export interface IUserSelectionsProps {
     filter: StudyViewFilterWithSampleIdentifierFilters;
-    customChartsFilter: { [key: string]: string[] };
+    customChartsFilter: ClinicalDataFilter[];
     numberOfSelectedSamplesInCustomSelection: number;
     comparisonGroupSelection: StudyViewComparisonGroup[];
     attributesMetaSet: { [id: string]: ChartMeta & { chartType: ChartType } };
@@ -281,62 +284,16 @@ export default class UserSelections extends React.Component<
         }
 
         // All custom data charts
-        if (!_.isEmpty(this.props.customChartsFilter)) {
-            _.reduce(
-                this.props.customChartsFilter,
-                (acc, content: string[], key: string) => {
-                    const chartMeta = this.props.attributesMetaSet[key];
-                    if (chartMeta) {
-                        acc.push(
-                            <div className={styles.parentGroupLogic}>
-                                <GroupLogic
-                                    components={[
-                                        <span
-                                            className={
-                                                styles.filterClinicalAttrName
-                                            }
-                                        >
-                                            {chartMeta.displayName}
-                                        </span>,
-                                        <GroupLogic
-                                            components={content.map(label => {
-                                                return (
-                                                    <PillTag
-                                                        content={label}
-                                                        backgroundColor={
-                                                            STUDY_VIEW_CONFIG
-                                                                .colors.theme
-                                                                .clinicalFilterContent
-                                                        }
-                                                        onDelete={() =>
-                                                            this.props.updateCustomChartFilter(
-                                                                chartMeta.uniqueKey,
-                                                                _.remove(
-                                                                    content,
-                                                                    value =>
-                                                                        value !==
-                                                                        label
-                                                                )
-                                                            )
-                                                        }
-                                                    />
-                                                );
-                                            })}
-                                            operation={'or'}
-                                            group={false}
-                                        />,
-                                    ]}
-                                    operation={':'}
-                                    group={false}
-                                />
-                            </div>
-                        );
-                    }
-                    return acc;
-                },
-                components
-            );
-        }
+        this.renderClinicalDataFilters(
+            this.props.customChartsFilter,
+            components,
+            (uniqueKey: string, values: DataFilterValue[]) => {
+                this.props.updateCustomChartFilter(
+                    uniqueKey,
+                    values.map(datum => datum.value)
+                );
+            }
+        );
 
         _.reduce(
             this.props.filter.geneFilters || [],
@@ -625,12 +582,12 @@ export default class UserSelections extends React.Component<
     }
 
     private groupedGeneQueries(
-        geneQueries: string[],
+        geneQueries: GeneFilterQuery[],
         chartMeta: ChartMeta & { chartType: ChartType }
     ): JSX.Element[] {
-        return geneQueries.map(oql => {
+        return geneQueries.map(geneQuery => {
             let color = DEFAULT_NA_COLOR;
-            let displayGeneSymbol = oql;
+            let displayGeneSymbol = geneQuery.hugoGeneSymbol;
             switch (chartMeta.chartType) {
                 case ChartTypeEnum.MUTATED_GENES_TABLE:
                     color = MUT_COLOR_MISSENSE;
@@ -639,10 +596,10 @@ export default class UserSelections extends React.Component<
                     color = STRUCTURAL_VARIANT_COLOR;
                     break;
                 case ChartTypeEnum.CNA_GENES_TABLE: {
-                    const oqlParts = oql.trim().split(':');
-                    if (oqlParts.length === 2) {
-                        displayGeneSymbol = oqlParts[0];
-                        let tagColor = getCNAColorByAlteration(oqlParts[1]);
+                    if (geneQuery.alterations.length === 1) {
+                        let tagColor = getCNAColorByAlteration(
+                            geneQuery.alterations[0]
+                        );
                         if (tagColor) {
                             color = tagColor;
                         }
@@ -654,8 +611,17 @@ export default class UserSelections extends React.Component<
                 <PillTag
                     content={displayGeneSymbol}
                     backgroundColor={color}
+                    infoSection={
+                        <FilterIconMessage
+                            chartType={chartMeta.chartType}
+                            geneFilterQuery={geneQuery}
+                        />
+                    }
                     onDelete={() =>
-                        this.props.removeGeneFilter(chartMeta.uniqueKey, oql)
+                        this.props.removeGeneFilter(
+                            chartMeta.uniqueKey,
+                            geneFilterQueryToOql(geneQuery)
+                        )
                     }
                 />
             );
