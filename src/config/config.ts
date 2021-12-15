@@ -307,15 +307,6 @@ export function initializeServerConfiguration(rawConfiguration: any) {
         miracumConfig.cancerdrugsJsonUrl = frontendOverride.cancerdrugsJsonUrl;
     }
 
-    localStorage.setItem(
-        'cancerdrugsUrl',
-        frontendOverride.cancerdrugsUrl || ''
-    );
-    localStorage.setItem(
-        'cancerdrugsJsonUrl',
-        frontendOverride.cancerdrugsJsonUrl || ''
-    );
-
     miracumConfig.fhirspark = miracumConfig.fhirspark || {};
     // @ts-ignore: ENV_* are defined in webpack.config.js
     miracumConfig.fhirspark.host = `${ENV_FHIRSPARK_HOST ||
@@ -332,6 +323,12 @@ export function initializeServerConfiguration(rawConfiguration: any) {
     // @ts-ignore: ENV_* are defined in webpack.config.js
     miracumConfig.cancerdrugsJsonUrl = `${ENV_CANCERDRUGSJSON_URL ||
         miracumConfig.cancerdrugsJsonUrl}`;
+
+    localStorage.setItem('cancerdrugsUrl', miracumConfig.cancerdrugsUrl || '');
+    localStorage.setItem(
+        'cancerdrugsJsonUrl',
+        miracumConfig.cancerdrugsJsonUrl || ''
+    );
 
     let localStorageOverride: any = {};
 
@@ -358,11 +355,10 @@ export function initializeServerConfiguration(rawConfiguration: any) {
         {},
         ServerConfigDefaults,
         rawConfiguration,
-        frontendOverride.serverConfig,
+        frontendOverride,
         miracumConfig,
         localStorageOverride.serverConfig
     );
-    console.log(mergedConfig);
 
     setServerConfig(mergedConfig);
 }

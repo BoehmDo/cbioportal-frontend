@@ -8,7 +8,6 @@ import {
     TimelineTrackSpecification,
     TimelineTrackType,
     ITimelineConfig,
-    randomColorGetter,
     POINT_COLOR,
 } from 'cbioportal-clinical-timeline';
 import {
@@ -23,10 +22,85 @@ import SampleMarker, {
 import SampleManager from 'pages/patientView/SampleManager';
 import { ISampleMetaDeta } from 'pages/patientView/timeline2/TimelineWrapper';
 import { ClinicalEvent } from 'cbioportal-ts-api-client';
+import { getColor } from 'cbioportal-frontend-commons';
+import ReactMarkdown from 'react-markdown';
 
 const OTHER = 'Other';
 
-export function configureTriageTimeline(baseConfig: ITimelineConfig) {
+export function configureHtanOhsuTimeline(baseConfig: ITimelineConfig) {
+    baseConfig.trackEventRenderers = baseConfig.trackEventRenderers || [];
+    baseConfig.trackEventRenderers.push({
+        trackTypeMatch: /IMAGING/i,
+        configureTrack: (cat: TimelineTrackSpecification) => {
+            cat.renderEvents = function(e) {
+                return (
+                    <a
+                        href={
+                            'https://minerva-story-htan-ohsu-demo.surge.sh/#s=0#w=0#g=0#m=-1#a=-100_-100#v=0.5_0.5_0.5#o=-100_-100_1_1#p=Q'
+                        }
+                        target={'_blank'}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            version="1.1"
+                            id="Layer_1"
+                            x="-8px"
+                            y="1px"
+                            width="16px"
+                            height="16px"
+                            viewBox="0 0 16 16"
+                            enable-background="new 0 0 16 16"
+                        >
+                            <g>
+                                <circle
+                                    fill="none"
+                                    stroke="#646464"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-miterlimit="10"
+                                    cx="7.997"
+                                    cy="9.058"
+                                    r="3.023"
+                                />
+                                <path
+                                    fill="none"
+                                    stroke="#646464"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-miterlimit="10"
+                                    d="   M14.168,4h-2.983l-0.521-1.36C10.503,2.288,10.07,2,9.702,2H6.359C5.99,2,5.558,2.288,5.396,2.64L4.877,4H1.893   C1.401,4,1,4.427,1,4.948v8.072C1,13.543,1.401,14,1.893,14h12.275C14.659,14,15,13.543,15,13.021V4.948   C15,4.427,14.659,4,14.168,4z"
+                                />
+                            </g>
+                        </svg>
+                    </a>
+                );
+            };
+            cat.renderTooltip = function(e) {
+                return (
+                    <div>
+                        <strong>Click camera to open image viewer</strong>
+                        <hr style={{ margin: '5px 0' }} />
+                        <table>
+                            <tr>
+                                <td>Assay Type</td>
+                                <td>mIHC</td>
+                            </tr>
+                            <tr>
+                                <td>File Format</td>
+                                <td>OME-TIFF</td>
+                            </tr>
+                        </table>
+                    </div>
+                );
+            };
+        },
+    });
+}
+
+export function configureTimelineToxicityColors(baseConfig: ITimelineConfig) {
     baseConfig.trackStructures = baseConfig.trackStructures || [];
     baseConfig.trackStructures!.push([
         'TOXICITY',
@@ -47,8 +121,14 @@ export function configureTriageTimeline(baseConfig: ITimelineConfig) {
                 '4': 'red',
             };
             return colorMap[grade.value] || POINT_COLOR;
+        } else {
+            const path = e.containingTrack.uid.split('.');
+            if (path[0] === 'TREATMENT' && path.length > 2) {
+                return getColor(path[2]);
+            } else {
+                return POINT_COLOR;
+            }
         }
-        return randomColorGetter(e);
     };
 }
 
@@ -320,7 +400,20 @@ export function buildBaseConfig(
                                                                     ' '
                                                                 )}
                                                         </th>
-                                                        <td>{d.value}</td>
+                                                        <td>
+                                                            {' '}
+                                                            <ReactMarkdown
+                                                                allowedElements={[
+                                                                    'p',
+                                                                    'a',
+                                                                ]}
+                                                                linkTarget={
+                                                                    '_blank'
+                                                                }
+                                                            >
+                                                                {d.value}
+                                                            </ReactMarkdown>
+                                                        </td>
                                                     </tr>
                                                 );
                                             }

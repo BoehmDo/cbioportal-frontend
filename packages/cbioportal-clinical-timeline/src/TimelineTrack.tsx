@@ -6,16 +6,14 @@ import {
     TimelineTrackSpecification,
     TimelineTrackType,
 } from './types';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import _ from 'lodash';
 import {
     formatDate,
-    REMOVE_FOR_DOWNLOAD_CLASSNAME,
-    TIMELINE_LINE_CHART_TRACK_HEIGHT,
-    TIMELINE_TRACK_HEIGHT,
-    getTrackHeight,
     getAttributeValue,
     getTrackEventColorGetter,
+    REMOVE_FOR_DOWNLOAD_CLASSNAME,
+    TIMELINE_TRACK_HEIGHT,
 } from './lib/helpers';
 import { TimelineStore } from './TimelineStore';
 import { renderStack } from './svg/renderStack';
@@ -27,7 +25,12 @@ import {
 } from './lib/lineChartAxisUtils';
 import { getColor } from 'cbioportal-frontend-commons';
 import { getTrackLabel } from './TrackHeader';
-import { renderShape } from './renderHelpers';
+import {
+    COLOR_ATTRIBUTE_KEY,
+    renderShape,
+    SHAPE_ATTRIBUTE_KEY,
+} from './renderHelpers';
+import ReactMarkdown from 'react-markdown';
 
 export interface ITimelineTrackProps {
     trackData: TimelineTrackSpecification;
@@ -142,7 +145,7 @@ export function randomColorGetter(e: TimelineEvent) {
 }
 
 function getSpecifiedColorIfExists(e: TimelineEvent) {
-    return getAttributeValue('STYLE_COLOR', e);
+    return getAttributeValue(COLOR_ATTRIBUTE_KEY, e);
 }
 
 const defaultColorGetter = function(e: TimelineEvent) {
@@ -318,7 +321,7 @@ const TimelineItemWithTooltip: React.FunctionComponent<{
     track: TimelineTrackSpecification;
     events: TimelineEvent[];
     content: any;
-}> = function({ x, store, track, events, content }) {
+}> = observer(function({ x, store, track, events, content }) {
     const [tooltipUid, setTooltipUid] = useState<string | null>(null);
 
     const transforms = [];
@@ -334,9 +337,15 @@ const TimelineItemWithTooltip: React.FunctionComponent<{
         return tooltipUid;
     }
 
+    const hoverStyle = store.doesTooltipExist(tooltipUid || '')
+        ? {
+              opacity: 0.5,
+          }
+        : {};
+
     return (
         <g
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', ...hoverStyle }}
             transform={transforms.join(' ')}
             onMouseMove={e => {
                 let uid = syncTooltipUid();
@@ -348,20 +357,29 @@ const TimelineItemWithTooltip: React.FunctionComponent<{
                     });
 
                     setTooltipUid(uid);
+
+                    store.setHoveredTooltipUid(uid);
+                    store.setMousePosition({
+                        x: e.pageX,
+                        y: e.pageY,
+                    });
                 }
-                store.setHoveredTooltipUid(uid);
-                store.setMousePosition({
-                    x: e.pageX,
-                    y: e.pageY,
-                });
             }}
             onMouseLeave={e => {
-                const uid = syncTooltipUid();
-
-                if (uid && !store.isTooltipPinned(uid)) {
-                    store.removeTooltip(uid);
-                    setTooltipUid(null);
-                }
+                // we use a timeout here to allow user to
+                // mouse into the tooltip (in order to copy or click a link)
+                // the tooltip onEnter handler causes the tooltip to
+                // become "pinned" meaning it is stuck open
+                // that way when this timeout finally executes
+                // the if statement will be false and the tooltip
+                // will not be removed
+                setTimeout(() => {
+                    const uid = syncTooltipUid();
+                    if (uid && !store.isTooltipPinned(uid)) {
+                        store.removeTooltip(uid);
+                        setTooltipUid(null);
+                    }
+                }, 100);
             }}
             onClick={() => {
                 const uid = syncTooltipUid();
@@ -374,24 +392,36 @@ const TimelineItemWithTooltip: React.FunctionComponent<{
             {content}
         </g>
     );
-};
+});
 
 export const EventTooltipContent: React.FunctionComponent<{
     event: TimelineEvent;
 }> = function({ event }) {
+    const attributes = event.event.attributes.filter(attr => {
+        return (
+            attr.key !== COLOR_ATTRIBUTE_KEY && attr.key !== SHAPE_ATTRIBUTE_KEY
+        );
+    });
     return (
         <div>
             <table>
                 <tbody>
                     {_.map(
-                        event.event.attributes.sort((a: any, b: any) =>
+                        attributes.sort((a: any, b: any) =>
                             a.key > b.key ? 1 : -1
                         ),
                         (att: any) => {
                             return (
                                 <tr>
                                     <th>{att.key.replace(/_/g, ' ')}</th>
-                                    <td>{att.value}</td>
+                                    <td>
+                                        <ReactMarkdown
+                                            allowedElements={['p', 'a']}
+                                            linkTarget={'_blank'}
+                                        >
+                                            {att.value}
+                                        </ReactMarkdown>
+                                    </td>
                                 </tr>
                             );
                         }

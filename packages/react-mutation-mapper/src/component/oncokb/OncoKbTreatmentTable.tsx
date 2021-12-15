@@ -13,6 +13,8 @@ import mainStyles from './main.module.scss';
 import './oncoKbTreatmentTable.scss';
 import request from 'superagent';
 
+console.log('override', localStorage.getItem('frontendConfig'));
+
 let cancerdrugsUrl = localStorage.getItem('cancerdrugsUrl') || '';
 let cancerdrugsJsonUrl = localStorage.getItem('cancerdrugsJsonUrl') || '';
 
