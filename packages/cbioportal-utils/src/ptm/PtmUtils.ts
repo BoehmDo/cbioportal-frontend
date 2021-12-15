@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import { PostTranslationalModification as DbPtm } from 'genome-nexus-ts-api-client';
 import {
@@ -310,7 +310,7 @@ export function getPubmedIdsFromUniprotFeature(ptm: UniprotFeature) {
                 e.source.name &&
                 e.source.name.toLowerCase().includes('pubmed')
         )
-        .map(e => e.source.id);
+        .map(e => e.source!.id);
 }
 
 export function getPtmTypeFromUniprotFeature(ptm: UniprotFeature) {

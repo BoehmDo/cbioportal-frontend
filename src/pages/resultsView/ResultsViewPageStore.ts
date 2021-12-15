@@ -103,7 +103,7 @@ import {
 import { fetchHotspotsData } from 'shared/lib/CancerHotspotsUtils';
 import ResultsViewMutationMapperStore from './mutation/ResultsViewMutationMapperStore';
 import { getServerConfig } from 'config/config';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { toSampleUuid } from '../../shared/lib/UuidUtils';
 import MutationDataCache from '../../shared/cache/MutationDataCache';
 import AccessorsForOqlFilter, {
@@ -191,6 +191,7 @@ import autobind from 'autobind-decorator';
 import {
     ChartMeta,
     ChartMetaDataTypeEnum,
+    FGA_VS_MUTATION_COUNT_KEY,
     getChartMetaDataType,
     getDefaultPriorityByUniqueKey,
     getFilteredStudiesWithSamples,
@@ -2686,16 +2687,13 @@ export class ResultsViewPageStore
                 SpecialChartsUniqueKeyEnum.FRACTION_GENOME_ALTERED
             ]
         ) {
-            _chartMetaSet[
-                SpecialChartsUniqueKeyEnum.MUTATION_COUNT_CNA_FRACTION
-            ] = {
+            _chartMetaSet[FGA_VS_MUTATION_COUNT_KEY] = {
                 dataType: ChartMetaDataTypeEnum.GENOMIC,
                 patientAttribute: false,
-                uniqueKey:
-                    SpecialChartsUniqueKeyEnum.MUTATION_COUNT_CNA_FRACTION,
+                uniqueKey: FGA_VS_MUTATION_COUNT_KEY,
                 displayName: 'Mutation Count vs Fraction of Genome Altered',
                 priority: getDefaultPriorityByUniqueKey(
-                    SpecialChartsUniqueKeyEnum.MUTATION_COUNT_CNA_FRACTION
+                    FGA_VS_MUTATION_COUNT_KEY
                 ),
                 renderWhenDataChange: false,
                 description: '',

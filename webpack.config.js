@@ -1,6 +1,5 @@
 var MiniCssExtractPlugin = require('mini-css-extract-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var WebpackFailPlugin = require('webpack-fail-plugin');
 var ProgressBarPlugin = require('progress-bar-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -12,7 +11,7 @@ var version = '"unknown"';
 // Don't show COMMIT/VERSION on Heroku (crashes, because no git dir)
 if (process.env.PATH.indexOf('heroku') === -1) {
     // show full git version
-    var GitRevisionPlugin = require('git-revision-webpack-plugin');
+    var { GitRevisionPlugin } = require('git-revision-webpack-plugin');
     var gitRevisionPlugin = new GitRevisionPlugin({
         versionCommand: 'describe --always --tags --dirty',
     });
@@ -68,7 +67,7 @@ const imgPath = 'reactapp/images/[hash].[ext]';
 const babelCacheFolder = process.env.BABEL_CACHE_FOLDER || false;
 
 // we don't need sourcemaps on circleci
-const sourceMap = process.env.DISABLE_SOURCEMAP ? '' : 'source-map';
+const sourceMap = process.env.DISABLE_SOURCEMAP ? false : 'source-map';
 
 var routeComponentRegex = /routes\/([^\/]+\/?[^\/]+).js$/;
 
@@ -165,38 +164,39 @@ var config = {
             ),
         }),
         new HtmlWebpackPlugin({ cache: false, template: 'my-index.ejs' }),
-        WebpackFailPlugin,
         new ProgressBarPlugin(),
         new webpack.DllReferencePlugin({
-            context: '.',
+            context: join(root, '.'),
             manifest: require('./common-dist/common-manifest.json'),
         }),
-        new CopyWebpackPlugin([
-            { from: './common-dist', to: 'reactapp' },
-            { from: './src/rootImages', to: 'images' },
-            { from: './src/common', to: 'common' },
-            {
-                from: './src/globalStyles/prefixed-bootstrap.min.css',
-                to: 'reactapp/prefixed-bootstrap.min.css',
-            },
-            {
-                from: './src/shared/lib/data/reference_genome_hg19.json',
-                to: 'reactapp/reference_genome_hg19.json',
-            },
-            {
-                from: './src/shared/legacy/igv.min.js',
-                to: 'reactapp/igv.min.js',
-            },
-            { from: './src/shared/legacy/igv.css', to: 'reactapp/igv.css' },
-            {
-                from: './src/globalStyles/prefixed-bootstrap.min.css.map',
-                to: 'reactapp/prefixed-bootstrap.min.css.map',
-            },
-            {
-                from: './attributes.json',
-                to: 'attributes.json',
-            },
-        ]), // destination is relative to dist directory
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: './common-dist', to: 'reactapp' },
+                { from: './src/rootImages', to: 'images' },
+                { from: './src/common', to: 'common' },
+                {
+                    from: './src/globalStyles/prefixed-bootstrap.min.css',
+                    to: 'reactapp/prefixed-bootstrap.min.css',
+                },
+                {
+                    from: './src/shared/lib/data/reference_genome_hg19.json',
+                    to: 'reactapp/reference_genome_hg19.json',
+                },
+                {
+                    from: './src/shared/legacy/igv.min.js',
+                    to: 'reactapp/igv.min.js',
+                },
+                { from: './src/shared/legacy/igv.css', to: 'reactapp/igv.css' },
+                {
+                    from: './src/globalStyles/prefixed-bootstrap.min.css.map',
+                    to: 'reactapp/prefixed-bootstrap.min.css.map',
+                },
+                {
+                    from: './attributes.json',
+                    to: 'attributes.json',
+                },
+            ],
+        }), // destination is relative to dist directory
         new TypedCssModulesPlugin({
             globPattern: 'src/**/*.module.scss',
         }),
@@ -222,8 +222,7 @@ var config = {
                     {
                         loader: 'ts-loader',
                         options: {
-                            transpileOnly:
-                                isDev || isTest || process.env.NETLIFY,
+                            transpileOnly: isDev || isTest,
                         },
                     },
                 ],
@@ -372,18 +371,29 @@ var config = {
         noParse: [/3Dmol-nojquery.js/, /jspdf/],
     },
     devServer: {
-        contentBase: './dist',
+        static: {
+            directory: path.resolve(__dirname, 'dist'),
+        },
         hot: true,
         historyApiFallback: true,
-        noInfo: false,
-        quiet: false,
-        lazy: false,
-        publicPath: '/',
+        // TODO removed in favor of https://webpack.js.org/configuration/other-options/#infrastructurelogging
+        // noInfo: false,
+        // quiet: false,
+        // lazy: false,
+        client: {
+            overlay: {
+                errors: true,
+                warnings: false,
+            },
+        },
         https: false,
         host: 'localhost',
         headers: { 'Access-Control-Allow-Origin': '*' },
-        stats: 'errors-only',
-        disableHostCheck: true,
+        allowedHosts: 'all',
+        devMiddleware: {
+            publicPath: '/',
+            stats: 'errors-only',
+        },
     },
 };
 
@@ -404,6 +414,7 @@ const defines = Object.keys(envVariables).reduce(
     {
         __NODE_ENV__: JSON.stringify(NODE_ENV),
         __DEBUG__: isDev,
+        'process.env.REACT_SPINKIT_NO_STYLES': false,
     }
 );
 
@@ -442,8 +453,8 @@ if (isDev) {
     //     }
     // );
     // config.entry.push(`${path.join(src, 'testWriter.js')}`);
-
-    config.plugins.push(new webpack.HotModuleReplacementPlugin());
+    // see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md
+    // config.plugins.push(new webpack.HotModuleReplacementPlugin());
 }
 
 if (isDev || isTest) {
