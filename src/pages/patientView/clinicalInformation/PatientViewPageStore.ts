@@ -1263,14 +1263,14 @@ export class PatientViewPageStore {
             if (this.clinicalEvents.result.length > 0) {
                 return new SampleManager(
                     patientData.samples!,
-                    this.clinicalEvents.result,
-                    this.sampleIds
+                    this.sampleIds,
+                    this.clinicalEvents.result
                 );
             } else {
                 return new SampleManager(
                     patientData.samples!,
-                    undefined,
-                    this.sampleIds
+                    this.sampleIds,
+                    undefined
                 );
             }
         },
@@ -1448,13 +1448,15 @@ export class PatientViewPageStore {
         {
             await: () => [this.patientViewData],
             invoke: async () => {
-                return await internalClient.getAllClinicalEventsOfPatientInStudyUsingGET(
+                const events = await internalClient.getAllClinicalEventsOfPatientInStudyUsingGET(
                     {
                         studyId: this.studyId,
                         patientId: this.patientId,
                         projection: 'DETAILED',
                     }
                 );
+
+                return _.sortBy(events, e => e.startNumberOfDaysSinceDiagnosis);
             },
         },
         []

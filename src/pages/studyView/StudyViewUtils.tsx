@@ -28,15 +28,10 @@ import {
 import * as React from 'react';
 import { buildCBioPortalPageUrl } from '../../shared/api/urls';
 import { BarDatum } from './charts/barChart/BarChart';
-import {
-    ChartUserSetting,
-    GenomicChart,
-    GenericAssayChart,
-} from './StudyViewPageStore';
+import { GenomicChart, GenericAssayChart } from './StudyViewPageStore';
 import { StudyViewPageTabKeyEnum } from 'pages/studyView/StudyViewPageTabs';
 import { Layout } from 'react-grid-layout';
 import internalClient from 'shared/api/cbioportalInternalClientInstance';
-import { VirtualStudy } from 'shared/model/VirtualStudy';
 import defaultClient from 'shared/api/cbioportalClientInstance';
 import {
     ChartDimension,
@@ -54,7 +49,6 @@ import { DEFAULT_NA_COLOR, getClinicalValueColor } from 'shared/lib/Colors';
 import { StudyViewComparisonGroup } from '../groupComparison/GroupComparisonUtils';
 import styles from './styles.module.scss';
 import { getGroupParameters } from 'pages/groupComparison/comparisonGroupManager/ComparisonGroupManagerUtils';
-import { SessionGroupData } from 'shared/api/ComparisonGroupClient';
 import { IStudyViewScatterPlotData } from './charts/scatterPlot/StudyViewScatterPlotUtils';
 import { CNA_TO_ALTERATION } from 'pages/resultsView/enrichments/EnrichmentsUtil';
 import ComplexKeyMap from 'shared/lib/complexKeyDataStructures/ComplexKeyMap';
@@ -70,6 +64,11 @@ import {
 import { ChartOption } from './addChartButton/AddChartButton';
 import { CNA_COLOR_AMP, CNA_COLOR_HOMDEL } from 'cbioportal-frontend-commons';
 import { observer } from 'mobx-react';
+import {
+    ChartUserSetting,
+    SessionGroupData,
+    VirtualStudy,
+} from 'shared/api/session-service/sessionServiceModels';
 
 // Cannot use ClinicalDataTypeEnum here for the strong type. The model in the type is not strongly typed
 export enum ClinicalDataTypeEnum {
@@ -102,7 +101,9 @@ export enum SpecialChartsUniqueKeyEnum {
     GENOMIC_PROFILES_SAMPLE_COUNT = 'GENOMIC_PROFILES_SAMPLE_COUNT',
     CASE_LISTS_SAMPLE_COUNT = 'CASE_LISTS_SAMPLE_COUNT',
     PATIENT_TREATMENTS = 'PATIENT_TREATMENTS',
+    PATIENT_TREATMENT_GROUPS = 'PATIENT_TREATMENT_GROUPS',
     SAMPLE_TREATMENTS = 'SAMPLE_TREATMENTS',
+    SAMPLE_TREATMENT_GROUPS = 'SAMPLE_TREATMENT_GROUPS',
 }
 
 export type AnalysisGroup = {
@@ -536,12 +537,14 @@ export function formatRange(
             return `${special}${max.toLocaleString()}`;
         }
     } else {
-        if (max === undefined) {
+        if (max === undefined || min === max) {
             return `${special}${min.toLocaleString()}`;
-        } else if (min !== max) {
-            return `${special}${min.toLocaleString()}-${max.toLocaleString()}`;
+        } else if (!special) {
+            // assuming that min is exclusive and max is inclusive
+            // use (min, max] notation instead of min-max
+            return `(${min.toLocaleString()}, ${max.toLocaleString()}]`;
         } else {
-            return `${special}${min.toLocaleString()}`;
+            return `${special}${min.toLocaleString()}-${max.toLocaleString()}`;
         }
     }
 }
@@ -862,7 +865,11 @@ export function isFiltered(
             (!filter.patientTreatmentFilters ||
                 _.isEmpty(filter.patientTreatmentFilters.filters)) &&
             (!filter.sampleTreatmentFilters ||
-                _.isEmpty(filter.sampleTreatmentFilters.filters)))
+                _.isEmpty(filter.sampleTreatmentFilters.filters)) &&
+            (!filter.patientTreatmentGroupFilters ||
+                _.isEmpty(filter.patientTreatmentGroupFilters.filters)) &&
+            (!filter.sampleTreatmentGroupFilters ||
+                _.isEmpty(filter.sampleTreatmentGroupFilters.filters)))
     );
 
     if (filter.sampleIdentifiersSet) {
@@ -969,6 +976,17 @@ export function getDataIntervalFilterValues(
                     dataBin.start === undefined && dataBin.end === undefined
                         ? dataBin.specialValue
                         : undefined,
+            } as DataFilterValue)
+    );
+}
+
+export function getCategoricalFilterValues(
+    values: string[]
+): DataFilterValue[] {
+    return values.map(
+        value =>
+            ({
+                value: value,
             } as DataFilterValue)
     );
 }

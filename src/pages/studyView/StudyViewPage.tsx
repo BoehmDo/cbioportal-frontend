@@ -62,10 +62,10 @@ import ResourcesTab, { RESOURCES_TAB_NAME } from './resources/ResourcesTab';
 import { ResourceData } from 'cbioportal-ts-api-client';
 import $ from 'jquery';
 import { StudyViewComparisonGroup } from 'pages/groupComparison/GroupComparisonUtils';
-import { CustomChart } from 'shared/api/sessionServiceAPI';
 import { parse } from 'query-string';
 import SettingsMenu from 'shared/components/driverAnnotations/SettingsMenu';
 import ErrorScreen from 'shared/components/errorScreen/ErrorScreen';
+import { CustomChartData } from 'shared/api/session-service/sessionServiceModels';
 
 export interface IStudyViewPageProps {
     routing: any;
@@ -350,12 +350,15 @@ export default class StudyViewPage extends React.Component<
             return [
                 ..._.values(this.store.clinicalDataBinPromises),
                 ..._.values(this.store.clinicalDataCountPromises),
+                ..._.values(this.store.genericAssayDataCountPromises),
                 this.store.mutationProfiles,
                 this.store.cnaProfiles,
                 this.store.selectedSamples,
                 this.store.molecularProfileSampleCounts,
                 this.store.sampleTreatments,
                 this.store.patientTreatments,
+                this.store.patientTreatmentGroups,
+                this.store.sampleTreatmentGroups,
             ];
         },
         invoke: async () => {
@@ -744,7 +747,7 @@ export default class StudyViewPage extends React.Component<
                                                                         .result
                                                                 }
                                                                 onSubmit={(
-                                                                    chart: CustomChart
+                                                                    chart: CustomChartData
                                                                 ) => {
                                                                     this.showCustomSelectTooltip = false;
                                                                     this.store.updateCustomSelect(

@@ -184,13 +184,7 @@ import {
 import { annotateAlterationTypes } from '../../shared/lib/oql/annotateAlterationTypes';
 import { ErrorMessages } from '../../shared/enums/ErrorEnums';
 import sessionServiceClient from '../../shared/api/sessionServiceInstance';
-import { VirtualStudy } from 'shared/model/VirtualStudy';
 import comparisonClient from '../../shared/api/comparisonGroupClientInstance';
-import {
-    Group,
-    Session,
-    SessionGroupData,
-} from '../../shared/api/ComparisonGroupClient';
 import { AppStore } from '../../AppStore';
 import { getNumSamples } from '../groupComparison/GroupComparisonUtils';
 import autobind from 'autobind-decorator';
@@ -276,6 +270,12 @@ import VariantTypeColumnFormatter from 'shared/components/mutationTable/column/V
 import HgvsgColumnFormatter from 'shared/components/mutationTable/column/HgvsgColumnFormatter';
 import ClinvarColumnFormatter from 'shared/components/mutationTable/column/ClinvarColumnFormatter';
 import SignalColumnFormatter from 'shared/components/mutationTable/column/SignalColumnFormatter';
+import {
+    Group,
+    ComparisonSession,
+    SessionGroupData,
+    VirtualStudy,
+} from 'shared/api/session-service/sessionServiceModels';
 
 type Optional<T> =
     | { isApplicable: true; value: T }
@@ -311,9 +311,11 @@ export const DataTypeConstants = {
     MAF: 'MAF',
     LOGVALUE: 'LOG-VALUE',
     LOG2VALUE: 'LOG2-VALUE',
-    LIMITVALUE: 'LIMIT-VALUE',
     FUSION: 'FUSION',
     SV: 'SV',
+    LIMITVALUE: 'LIMIT-VALUE',
+    BINARY: 'BINARY',
+    CATEGORICAL: 'CATEGORICAL',
 };
 
 export enum SampleListCategoryType {
@@ -963,7 +965,7 @@ export class ResultsViewPageStore
         },
     });
 
-    readonly comparisonTabComparisonSession = remoteData<Session>({
+    readonly comparisonTabComparisonSession = remoteData<ComparisonSession>({
         await: () => [this.studyIds],
         invoke: () => {
             const sessionId = this.urlWrapper.query
@@ -3029,14 +3031,14 @@ export class ResultsViewPageStore
         },
     });
 
-    readonly discreteCopyNumberAlterations = remoteData<
+    // we want to load dcna using sample list id (instead of list of samples)
+    // and then filter down to those contained in actually queried samples
+    // this is an optimization that allows us to fire these calls earlier
+    // and to make cache items finite (by "all" sample list id)
+    readonly discreteCopyNumberAlterations_preload = remoteData<
         DiscreteCopyNumberData[]
     >({
-        await: () => [
-            this.genes,
-            this.studyToMolecularProfileDiscreteCna,
-            this.samples,
-        ],
+        await: () => [this.genes, this.studyToMolecularProfileDiscreteCna],
         invoke: async () => {
             if (this.cnaMolecularProfileIds.length == 0) {
                 return [];
@@ -3048,40 +3050,53 @@ export class ResultsViewPageStore
             );
 
             const promises = _.map(
-                this.cnaMolecularProfileIds,
-                cnaMolecularProfileId => {
-                    const sampleIds = _.map(
-                        this.samples.result,
-                        (sample: Sample) => {
-                            if (
-                                sample.studyId in
-                                this.studyToMolecularProfileDiscreteCna.result
-                            ) {
-                                return sample.sampleId;
-                            }
-                        }
-                    );
-
+                this.studyToMolecularProfileDiscreteCna.result,
+                (cnaMolecularProfile, studyId) => {
                     return client.fetchDiscreteCopyNumbersInMolecularProfileUsingPOST(
                         {
                             discreteCopyNumberEventType: 'HOMDEL_AND_AMP',
                             discreteCopyNumberFilter: {
                                 entrezGeneIds,
-                                sampleIds,
+                                sampleListId: `${studyId}_all`,
                             } as DiscreteCopyNumberFilter,
-                            molecularProfileId: cnaMolecularProfileId,
+                            molecularProfileId:
+                                cnaMolecularProfile.molecularProfileId,
                             projection: 'DETAILED',
                         }
                     );
                 }
             );
 
-            let outdata = [] as DiscreteCopyNumberData[];
-            await Promise.all(promises).then((cnaData: any[]) => {
-                outdata = _.flattenDeep(cnaData);
-            });
+            return Promise.all(promises).then((cnaData: any[]) =>
+                _.flattenDeep(cnaData)
+            );
+        },
+    });
 
-            return Promise.resolve(outdata as DiscreteCopyNumberData[]);
+    readonly discreteCopyNumberAlterations = remoteData<
+        DiscreteCopyNumberData[]
+    >({
+        await: () => [
+            this.discreteCopyNumberAlterations_preload,
+            this.sampleKeyToSample,
+        ],
+        invoke: async () => {
+            if (
+                this.discreteCopyNumberAlterations_preload.result!.length == 0
+            ) {
+                return [];
+            }
+
+            return Promise.resolve(
+                this.discreteCopyNumberAlterations_preload.result!.filter(
+                    dcna => {
+                        return (
+                            dcna.uniqueSampleKey in
+                            this.sampleKeyToSample.result!
+                        );
+                    }
+                )
+            );
         },
     });
 
@@ -4466,7 +4481,7 @@ export class ResultsViewPageStore
     );
 
     readonly genericAssayEntitiesGroupByMolecularProfileId = remoteData<{
-        [genericAssayType: string]: GenericAssayMeta[];
+        [profileId: string]: GenericAssayMeta[];
     }>({
         await: () => [this.molecularProfilesInStudies],
         invoke: async () => {
