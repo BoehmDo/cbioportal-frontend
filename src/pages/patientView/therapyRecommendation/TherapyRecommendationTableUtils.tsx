@@ -2,6 +2,7 @@ import {
     ITherapyRecommendation,
     EvidenceLevel,
     IReference,
+    EvidenceLevelExtension,
 } from 'shared/model/TherapyRecommendation';
 import _ from 'lodash';
 import request from 'superagent';
@@ -38,6 +39,7 @@ export function getNewTherapyRecommendation(
         comment: [],
         reasoning: {},
         evidenceLevel: EvidenceLevel.NA,
+        evidenceLevelExtension: EvidenceLevelExtension.NA,
         author: getAuthor(),
         references: [],
         treatments: [],

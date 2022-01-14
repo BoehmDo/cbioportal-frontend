@@ -10,6 +10,15 @@ export enum EvidenceLevel {
     m4,
 }
 
+export enum EvidenceLevelExtension {
+    NA = '',
+    IS = 'is',
+    IV = 'iv',
+    R = 'R',
+    ZFDA = 'Z(FDA)',
+    ZEMA = 'Z(EMA)',
+}
+
 export enum MtbState {
     PARTIAL = 'Partial',
     PRELIMINARY = 'Preliminary',
@@ -39,6 +48,7 @@ export interface ITherapyRecommendation {
     comment: string[];
     reasoning: IReasoning;
     evidenceLevel: EvidenceLevel;
+    evidenceLevelExtension: EvidenceLevelExtension;
     author: string;
     treatments: ITreatment[];
     references: IReference[];

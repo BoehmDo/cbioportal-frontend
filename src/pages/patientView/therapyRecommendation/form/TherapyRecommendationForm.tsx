@@ -119,6 +119,9 @@ export default class TherapyRecommendationForm extends React.Component<
                                 onChange={evidenceLevel =>
                                     (therapyRecommendation.evidenceLevel = evidenceLevel)
                                 }
+                                onChangeExtension={evidenceLevelExtension =>
+                                    (therapyRecommendation.evidenceLevelExtension = evidenceLevelExtension)
+                                }
                             />
                         </div>
 
