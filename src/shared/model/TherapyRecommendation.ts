@@ -49,6 +49,7 @@ export interface ITherapyRecommendation {
     reasoning: IReasoning;
     evidenceLevel: EvidenceLevel;
     evidenceLevelExtension: EvidenceLevelExtension;
+    evidenceLevelM3Text: string;
     author: string;
     treatments: ITreatment[];
     references: IReference[];

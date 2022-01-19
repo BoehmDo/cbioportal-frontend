@@ -13,12 +13,13 @@ import {
     DefaultTooltip,
     placeArrowBottomLeft,
 } from 'cbioportal-frontend-commons';
-import { Checkbox, Col, Row } from 'react-bootstrap';
+import { Checkbox, Col, Form, FormControl, Row } from 'react-bootstrap';
 
 interface TherapyRecommendationFormEvidenceLevelInputProps {
     data: ITherapyRecommendation;
     onChange: (evidenceLevel: EvidenceLevel) => void;
     onChangeExtension: (evidenceLevelExtension: EvidenceLevelExtension) => void;
+    onChangeM3Text: (text: string) => void;
 }
 
 type MyOption = { label: string; value: string };
@@ -30,6 +31,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
         isM1Disabled: boolean;
         isValue: boolean;
         ivValue: boolean;
+        m3Text: string;
         rValue: boolean;
         zValue: {};
     }
@@ -48,6 +50,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
             ivValue:
                 this.props.data.evidenceLevelExtension.toString() ===
                 EvidenceLevelExtension.IV,
+            m3Text: this.props.data.evidenceLevelM3Text,
             rValue:
                 this.props.data.evidenceLevelExtension.toString() ===
                 EvidenceLevelExtension.R,
@@ -118,6 +121,11 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
             this.props.onChangeExtension(extension);
         };
 
+        const changeme = (e: any) => {
+            this.setState({ m3Text: e.target.value });
+            this.props.onChangeM3Text(e.target.value);
+        };
+
         return (
             <Row>
                 <Col xs={3}>
@@ -149,31 +157,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                                 rValue: false,
                                 zValue: {},
                             });
-                            console.log(
-                                !this.props.data.evidenceLevel
-                                    .toString()
-                                    .match('m1')
-                            );
                         }}
-                    />
-                </Col>
-                <Col xs={3}>
-                    <Select
-                        options={evidenceLevelApprovalOptions}
-                        isDisabled={this.state.isM1Disabled}
-                        defaultValue={{ label: '', value: '' }}
-                        onChange={(selectedOption: MyOption) => {
-                            setExtension(
-                                EvidenceLevelExtension[
-                                    selectedOption.value as keyof typeof EvidenceLevelExtension
-                                ]
-                            );
-                            this.setState({ zValue: selectedOption });
-                        }}
-                        value={this.state.zValue}
-                        name="evidenceLevelApproval"
-                        className="basic-select"
-                        classNamePrefix="select"
                     />
                 </Col>
                 <Col xs={2}>
@@ -187,8 +171,20 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                             this.setState({ isValue: !this.state.isValue });
                         }}
                         inline={true}
+                        className={styles['checkbox-align']}
                     >
-                        is
+                        is&nbsp;
+                        <DefaultTooltip
+                            placement="bottomLeft"
+                            trigger={['hover', 'focus']}
+                            overlay={getTooltipEvidenceContent('is')}
+                            destroyTooltipOnHide={false}
+                            onPopupAlign={placeArrowBottomLeft}
+                        >
+                            <i
+                                className={'fa fa-info-circle ' + styles.icon}
+                            ></i>
+                        </DefaultTooltip>
                     </Checkbox>
                 </Col>
                 <Col xs={2}>
@@ -202,9 +198,51 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                             this.setState({ ivValue: !this.state.ivValue });
                         }}
                         inline={true}
+                        className={styles['checkbox-align']}
                     >
-                        iv
+                        iv&nbsp;
+                        <DefaultTooltip
+                            placement="bottomLeft"
+                            trigger={['hover', 'focus']}
+                            overlay={getTooltipEvidenceContent('iv')}
+                            destroyTooltipOnHide={false}
+                            onPopupAlign={placeArrowBottomLeft}
+                        >
+                            <i
+                                className={'fa fa-info-circle ' + styles.icon}
+                            ></i>
+                        </DefaultTooltip>
                     </Checkbox>
+                </Col>
+                <Col xs={3}>
+                    {this.props.data.evidenceLevel.toString() == 'm3' ? (
+                        <FormControl
+                            disabled={
+                                !this.state.isValue && !this.state.ivValue
+                            }
+                            onChange={changeme}
+                            value={this.state.m3Text}
+                        />
+                    ) : (
+                        <Select
+                            options={evidenceLevelApprovalOptions}
+                            isDisabled={this.state.isM1Disabled}
+                            components={{ Option }}
+                            defaultValue={{ label: '', value: '' }}
+                            onChange={(selectedOption: MyOption) => {
+                                setExtension(
+                                    EvidenceLevelExtension[
+                                        selectedOption.value as keyof typeof EvidenceLevelExtension
+                                    ]
+                                );
+                                this.setState({ zValue: selectedOption });
+                            }}
+                            value={this.state.zValue}
+                            name="evidenceLevelApproval"
+                            className="basic-select"
+                            classNamePrefix="select"
+                        />
+                    )}
                 </Col>
                 <Col xs={2}>
                     <Checkbox
@@ -216,8 +254,20 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                             setExtension(EvidenceLevelExtension.R);
                             this.setState({ rValue: !this.state.rValue });
                         }}
+                        className={styles['checkbox-align']}
                     >
-                        R
+                        R&nbsp;
+                        <DefaultTooltip
+                            placement="bottomLeft"
+                            trigger={['hover', 'focus']}
+                            overlay={getTooltipEvidenceContent('R')}
+                            destroyTooltipOnHide={false}
+                            onPopupAlign={placeArrowBottomLeft}
+                        >
+                            <i
+                                className={'fa fa-info-circle ' + styles.icon}
+                            ></i>
+                        </DefaultTooltip>
                     </Checkbox>
                 </Col>
             </Row>

@@ -299,6 +299,11 @@ export default class MtbTherapyRecommendationTable extends React.Component<
                         Level{' '}
                         <b>{therapyRecommendation.evidenceLevel || 'NA'}</b>{' '}
                         {therapyRecommendation.evidenceLevelExtension || ''}
+                        {therapyRecommendation.evidenceLevelM3Text
+                            ? ' (' +
+                              therapyRecommendation.evidenceLevelM3Text +
+                              ')'
+                            : ''}
                     </span>
                     <If condition={therapyRecommendation.evidenceLevel}>
                         <DefaultTooltip
