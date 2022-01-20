@@ -29,6 +29,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
     {
         isM3Disabled: boolean;
         isM1Disabled: boolean;
+        isRDisabled: boolean;
         isValue: boolean;
         ivValue: boolean;
         m3Text: string;
@@ -38,12 +39,15 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
 > {
     constructor(props: TherapyRecommendationFormEvidenceLevelInputProps) {
         super(props);
-
+        console.log(this.props.data.evidenceLevel.toString());
         this.state = {
             isM3Disabled:
                 this.props.data.evidenceLevel.toString() !==
                 EvidenceLevel[EvidenceLevel.m3].toString(),
             isM1Disabled: !this.props.data.evidenceLevel.toString().match('m1'),
+            isRDisabled:
+                this.props.data.evidenceLevel.toString() === 'NA' ||
+                this.props.data.evidenceLevel.toString() === '0',
             isValue:
                 this.props.data.evidenceLevelExtension.toString() ==
                 EvidenceLevelExtension.IS,
@@ -153,6 +157,9 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                                 isM1Disabled: !this.props.data.evidenceLevel
                                     .toString()
                                     .match('m1'),
+                                isRDisabled:
+                                    this.props.data.evidenceLevel.toString() ===
+                                    'NA',
                                 isValue: false,
                                 ivValue: false,
                                 rValue: false,
@@ -251,6 +258,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                         default={false}
                         inline={true}
                         name="evidenceLevelR"
+                        disabled={this.state.isRDisabled}
                         checked={this.state.rValue}
                         onChange={() => {
                             setExtension(EvidenceLevelExtension.R);
