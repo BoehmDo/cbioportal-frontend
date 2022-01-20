@@ -121,7 +121,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
             this.props.onChangeExtension(extension);
         };
 
-        const changeme = (e: any) => {
+        const onChangeM3Text = (e: any) => {
             this.setState({ m3Text: e.target.value });
             this.props.onChangeM3Text(e.target.value);
         };
@@ -145,6 +145,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                             this.props.onChangeExtension(
                                 EvidenceLevelExtension.NA
                             );
+                            this.props.onChangeM3Text('');
                             this.setState({
                                 isM3Disabled:
                                     this.props.data.evidenceLevel.toString() !==
@@ -156,6 +157,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                                 ivValue: false,
                                 rValue: false,
                                 zValue: {},
+                                m3Text: '',
                             });
                         }}
                     />
@@ -220,7 +222,7 @@ export default class TherapyRecommendationFormEvidenceLevelInput extends React.C
                             disabled={
                                 !this.state.isValue && !this.state.ivValue
                             }
-                            onChange={changeme}
+                            onChange={onChangeM3Text}
                             value={this.state.m3Text}
                         />
                     ) : (
