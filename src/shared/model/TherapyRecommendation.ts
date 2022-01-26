@@ -33,6 +33,7 @@ export interface IRecommender {
 
 export interface IMtb {
     id: string;
+    orderId: string;
     therapyRecommendations: ITherapyRecommendation[];
     geneticCounselingRecommendation: boolean;
     rebiopsyRecommendation: boolean;
