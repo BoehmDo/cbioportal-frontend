@@ -461,6 +461,11 @@ export default class MtbTable extends React.Component<IMtbProps, IMtbState> {
         const newMtbs = this.state.mtbs.slice();
         const newMtb = {
             id: 'mtb_' + this.props.patientId + '_' + now.getTime(),
+            orderId: (
+                this.props.clinicalData.filter(
+                    e => e.clinicalAttributeId == 'ORDER_ID'
+                )[0] || { value: '' }
+            ).value,
             generalRecommendation: '',
             geneticCounselingRecommendation: false,
             rebiopsyRecommendation: false,
