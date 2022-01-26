@@ -2,6 +2,7 @@ import {
     ITherapyRecommendation,
     EvidenceLevel,
     IReference,
+    EvidenceLevelExtension,
 } from 'shared/model/TherapyRecommendation';
 import _ from 'lodash';
 import request from 'superagent';
@@ -38,6 +39,8 @@ export function getNewTherapyRecommendation(
         comment: [],
         reasoning: {},
         evidenceLevel: EvidenceLevel.NA,
+        evidenceLevelExtension: EvidenceLevelExtension.NA,
+        evidenceLevelM3Text: '',
         author: getAuthor(),
         references: [],
         treatments: [],
@@ -265,6 +268,38 @@ export function getEvidenceLevelDesc() {
                 Assoziation des Biomarkers mit der Wirksamkeit der Medikation
                 nahe, welche bisher{' '}
                 <b>nicht durch (pr&auml;)klinische Daten </b>gest&uuml;tzt wird.
+            </span>
+        ),
+        is: (
+            <span>
+                <i>In situ</i>-Daten aus Untersuchungen an Patientenmaterial
+                (z.B. IHC, FISH) unterstützen den Evidenzgrad. Die
+                unterstützende Methode kann in Klammern zusätzlich angegeben
+                werden, z.B. Evidenzgrad 3 is (IHC).
+            </span>
+        ),
+        iv: (
+            <span>
+                <i>In vitro</i>-Daten/ <i>in vivo</i>-Modelle (z.B. PDX-Modelle)
+                derselben Tumorentität unterstützen den Evidenzgrad. Die
+                unterstützende Methode kann in Klammern angegeben werden, z.B.
+                Evidenzgrad 2 iv (PDX).
+            </span>
+        ),
+        'Z(FDA)': (
+            <span>
+                Zusatzhinweis für Zulassungsstatus: FDA-Zulassung liegt vor.
+            </span>
+        ),
+        'Z(EMA)': (
+            <span>
+                Zusatzhinweis für Zulassungsstatus: EMA-Zulassung liegt vor.
+            </span>
+        ),
+        R: (
+            <span>
+                Verweis, dass es sich hierbei um einen Resistenzmarker für eine
+                bestimmte Therapie handelt.
             </span>
         ),
     };

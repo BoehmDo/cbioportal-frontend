@@ -189,9 +189,9 @@
     box-shadow: 10px 15px 40px -16px rgb(50, 50, 50);
     background-color: #90cd3c;
     font-size: 20px;
-    z-index:99999999;
+    z-index: 99999999;
     padding: 20px 20px 20px 20px;
-    box-sizing:border-box;
+    box-sizing: border-box;
     color: #000000;
     position: fixed;
     top: 50px;
@@ -200,6 +200,10 @@
     font-weight: 400;
     line-height: 14px;
     text-align: center;
+}
+
+.checkbox-align {
+    margin-top: 8px;
 }
 
 /*
