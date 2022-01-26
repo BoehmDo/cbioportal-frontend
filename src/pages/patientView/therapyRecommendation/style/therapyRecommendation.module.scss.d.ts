@@ -4,6 +4,7 @@ declare const styles: {
   readonly "addOncoKbButton": string;
   readonly "alterationUl": string;
   readonly "armDiv": string;
+  readonly "checkbox-align": string;
   readonly "criteriaHr": string;
   readonly "deleteButton": string;
   readonly "deleteMtbButton": string;
