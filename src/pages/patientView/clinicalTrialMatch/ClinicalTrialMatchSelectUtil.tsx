@@ -108,6 +108,7 @@ export const ClinicalTrialMatchMutationSelect = (props: CustomSelectProps) => {
                 value={value}
                 options={props.options}
                 tabSelectsOption={true}
+                placeholder={props.placeholder}
                 backspaceRemovesValue={false}
                 isMulti
             />
