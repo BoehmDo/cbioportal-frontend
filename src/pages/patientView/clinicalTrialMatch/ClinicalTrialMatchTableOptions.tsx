@@ -1,4 +1,5 @@
 import React from 'react';
+import ClinicalTrialMatchMutationSelect from './ClinicalTrialMatchSelectUtil';
 import { PatientViewPageStore } from '../clinicalInformation/PatientViewPageStore';
 import { RecruitingStatus } from 'shared/enums/ClinicalTrialsGovRecruitingStatus';
 import Select from 'react-select';
@@ -53,7 +54,7 @@ interface IClinicalTrialOptionsMatchState {
 class ClinicalTrialMatchTableOptions extends React.Component<
     IClinicalTrialOptionsMatchProps,
     IClinicalTrialOptionsMatchState
-    > {
+> {
     recruiting_values: RecruitingStatus[] = [];
     countries: Array<String>;
     genders: Array<String>;
@@ -62,18 +63,23 @@ class ClinicalTrialMatchTableOptions extends React.Component<
     age: string;
     ageDefault: any;
 
-
     constructor(props: IClinicalTrialOptionsMatchProps) {
         super(props);
 
         this.gender = { label: 'All', value: 'All' };
-        let sex = this.props.store.clinicalDataPatient.result.find(attribute => attribute.clinicalAttributeId === 'SEX')?.value;
+        let sex = this.props.store.clinicalDataPatient.result.find(
+            attribute => attribute.clinicalAttributeId === 'SEX'
+        )?.value;
         if (sex !== undefined && sex.length > 0) {
             this.gender = { label: sex, value: sex };
         }
 
-        this.age = this.props.store.clinicalDataPatient.result.find(attribute => attribute.clinicalAttributeId === 'AGE')?.value || '0';
-        this.ageDefault = this.age != '0' ? [{ label: this.age, value: this.age}] : null;
+        this.age =
+            this.props.store.clinicalDataPatient.result.find(
+                attribute => attribute.clinicalAttributeId === 'AGE'
+            )?.value || '0';
+        this.ageDefault =
+            this.age != '0' ? [{ label: this.age, value: this.age }] : null;
 
         this.state = {
             mutationSymbolItems: new Array<string>(),
@@ -92,7 +98,6 @@ class ClinicalTrialMatchTableOptions extends React.Component<
         this.genders = genderNames;
         this.countries = countriesNames;
         this.locationsWithCoordinates = Object.keys(CITIES_AND_COORDINATES);
-
     }
 
     getRecruitingKeyFromValueString(value: string): RecruitingStatus {
@@ -140,7 +145,6 @@ class ClinicalTrialMatchTableOptions extends React.Component<
         console.log('necSymbols');
         console.log(necSymbols);
         console.log('dist');
-
     }
 
     render() {
@@ -165,7 +169,7 @@ class ClinicalTrialMatchTableOptions extends React.Component<
                                 marginBottom: '5px',
                             }}
                         >
-                            <CreatableSelect
+                            <ClinicalTrialMatchMutationSelect
                                 options={this.props.store.mutationHugoGeneSymbols.map(
                                     geneSymbol => ({
                                         label: geneSymbol,
@@ -173,6 +177,7 @@ class ClinicalTrialMatchTableOptions extends React.Component<
                                     })
                                 )}
                                 isMulti
+                                data={this.state.mutationSymbolItems}
                                 name="mutationSearch"
                                 className="basic-multi-select"
                                 classNamePrefix="select"
@@ -209,7 +214,7 @@ class ClinicalTrialMatchTableOptions extends React.Component<
                                 marginBottom: '5px',
                             }}
                         >
-                            <CreatableSelect
+                            <ClinicalTrialMatchMutationSelect
                                 options={this.props.store.mutationHugoGeneSymbols.map(
                                     geneSymbol => ({
                                         label: geneSymbol,
@@ -217,6 +222,7 @@ class ClinicalTrialMatchTableOptions extends React.Component<
                                     })
                                 )}
                                 isMulti
+                                data={this.state.mutationNecSymbolItems}
                                 name="mutationSearch"
                                 className="basic-multi-select"
                                 classNamePrefix="select"
@@ -336,11 +342,11 @@ class ClinicalTrialMatchTableOptions extends React.Component<
                                 onChange={(newValue: any) => {
                                     if (newValue !== null) {
                                         this.setState({
-                                            age: +newValue.value
+                                            age: +newValue.value,
                                         });
                                     } else {
                                         this.setState({
-                                            age: 0
+                                            age: 0,
                                         });
                                     }
                                 }}

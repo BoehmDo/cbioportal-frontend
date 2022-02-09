@@ -1,41 +1,31 @@
 import React, { useState } from 'react';
 import CreatableSelect from 'react-select';
-import { OptionsType, ValueType } from 'react-select';
-
-import { Drugs } from './data/Drugs';
-import {
-    ITherapyRecommendation,
-    ITreatment,
-} from 'shared/model/TherapyRecommendation';
 
 interface Option {
     label: string;
-    value: ITreatment;
+    value: string;
 }
 
 interface CustomSelectProps {
-    data: ITherapyRecommendation;
-    onChange: (drugs: ITreatment[]) => void;
+    data: string[];
+    options: Option[];
+    onChange: (mutations: string[]) => void;
+    isMulti?: boolean;
+    name?: string;
+    className?: string;
+    classNamePrefix?: string;
+    placeholder?: string;
 }
 
-export const TherapyRecommendationFormDrugInput = (
-    props: CustomSelectProps
-) => {
-    let allDrugs = Drugs;
-
-    let drugOptions = allDrugs.map((drug: ITreatment) => ({
-        value: drug,
-        label: drug.name,
-    }));
-
-    const drugDefault = props.data.treatments.map((drug: ITreatment) => ({
-        value: drug,
-        label: drug.name,
+export const ClinicalTrialMatchMutationSelect = (props: CustomSelectProps) => {
+    const mutationDefault = props.data.map((mutation: string) => ({
+        value: mutation,
+        label: mutation,
     }));
 
     const [value, setValue] = useState<Option[]>();
     const [inputValue, setInputValue] = useState<string>();
-    const [options, setOptions] = useState<Option[]>(drugOptions as Option[]);
+    const [options, setOptions] = useState<Option[]>([]);
 
     const onChange = (selectedOption: any) => {
         setValue(selectedOption as Option[]);
@@ -43,11 +33,11 @@ export const TherapyRecommendationFormDrugInput = (
         if (Array.isArray(selectedOption)) {
             props.onChange(
                 selectedOption.map((option: Option) => {
-                    return option.value as ITreatment;
+                    return option.value;
                 })
             );
         } else if (selectedOption === null) {
-            props.onChange([] as ITreatment[]);
+            props.onChange([]);
         }
     };
 
@@ -59,12 +49,11 @@ export const TherapyRecommendationFormDrugInput = (
 
     const onBlur = (event: any) => {
         if (inputValue !== '') {
-            const val = { name: inputValue, ncit_code: '' } as ITreatment;
-            const newValue = { label: inputValue, value: val } as Option;
+            const newValue = { label: inputValue, value: inputValue } as Option;
             const opts = [...(value || []), newValue];
             props.onChange(
                 opts.map((option: Option) => {
-                    return option.value as ITreatment;
+                    return option.value;
                 })
             );
             setValue([...(value || []), newValue] as Option[]);
@@ -86,12 +75,14 @@ export const TherapyRecommendationFormDrugInput = (
         }
         if (event.key === 'Enter') {
             if (inputValue !== '') {
-                const val = { name: inputValue, ncit_code: '' } as ITreatment;
-                const newValue = { label: inputValue, value: val } as Option;
+                const newValue = {
+                    label: inputValue,
+                    value: inputValue,
+                } as Option;
                 const opts = [...(value || []), newValue];
                 props.onChange(
                     opts.map((option: Option) => {
-                        return option.value as ITreatment;
+                        return option.value;
                     })
                 );
                 setValue([...(value || []), newValue] as Option[]);
@@ -103,20 +94,21 @@ export const TherapyRecommendationFormDrugInput = (
     return (
         <>
             <CreatableSelect
-                name="commentsSelect"
-                className="creatable-multi-select"
-                classNamePrefix="select"
+                name={props.name}
+                className={props.className}
+                classNamePrefix={props.classNamePrefix}
                 defaultInputValue=""
-                defaultValue={drugDefault}
-                allowCreateWhileLoading="true"
+                defaultValue={mutationDefault}
+                allowCreateWhileLoading={true}
                 inputValue={inputValue}
                 onInputChange={onInputChange}
                 onChange={onChange}
                 onBlur={onBlur}
                 onKeyDown={onKeyDown}
                 value={value}
-                options={options}
+                options={props.options}
                 tabSelectsOption={true}
+                placeholder={props.placeholder}
                 backspaceRemovesValue={false}
                 isMulti
             />
@@ -124,4 +116,4 @@ export const TherapyRecommendationFormDrugInput = (
     );
 };
 
-export default TherapyRecommendationFormDrugInput;
+export default ClinicalTrialMatchMutationSelect;
